@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  background: #07080d;
+  color: #f3efe4;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at top, rgba(61, 255, 176, 0.09), transparent 36%),
+    radial-gradient(ellipse at 85% 0%, rgba(255, 138, 91, 0.08), transparent 28%),
+    #07080d;
+}
+
+::selection {
+  background: rgba(61, 255, 176, 0.28);
+}
+
+.stage {
+  perspective: 900px;
+}
+
+.cube {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  transform-style: preserve-3d;
+  animation: spin 8s linear infinite;
+}
+
+.cube span {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(61, 255, 176, 0.7);
+  background: linear-gradient(160deg, rgba(61, 255, 176, 0.18), rgba(255, 138, 91, 0.05));
+}
+
+.cube span:nth-child(1) { transform: rotateY(0deg) translateZ(56px); }
+.cube span:nth-child(2) { transform: rotateY(180deg) translateZ(56px); }
+.cube span:nth-child(3) { transform: rotateY(90deg) translateZ(56px); }
+.cube span:nth-child(4) { transform: rotateY(-90deg) translateZ(56px); }
+.cube span:nth-child(5) { transform: rotateX(90deg) translateZ(56px); }
+.cube span:nth-child(6) { transform: rotateX(-90deg) translateZ(56px); }
+
+.scan::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent, rgba(61, 255, 176, 0.18), transparent);
+  animation: scan 2.8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes spin {
+  to { transform: rotateX(-18deg) rotateY(360deg); }
+}
+
+@keyframes scan {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(100%); }
+}
