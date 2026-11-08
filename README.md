@@ -1,38 +1,65 @@
 # AppDNA
 
-Teach an agent to acquire a software capability, then keep it only when an independent test passes.
+Give an agent a software task, observe its computer use, then keep the procedure only when an independent outcome test passes.
 
-The first learning target is Blender: create a cube and assign a material.
+This branch adds a Northstar Goods / Chatwoot demo with tasks, a workspace, independent routing checks, evidence, VIP follow-up requirements and saved skills. The original native-app explorer remains available.
 
-## Layout
+The interface uses official **shadcn/ui New York components**, **Radix UI**, Tailwind CSS 4 and bundled Geist fonts. The light sage surfaces, deep green controls and DNA artwork share one theme. No successful run, screenshot or learned skill is fabricated.
 
-- `backend/` FastAPI, SQLite, provider adapters, Blender sandbox
-- `frontend/` Next.js project console
+## Run locally
 
-## Run
+Use Node.js 22 or newer for the frontend.
 
-```bash
+```sh
 cd backend
 uv venv --python 3.11 .venv
 . .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --port 8787
+uvicorn app.main:app --host 127.0.0.1 --port 8787
 ```
 
-```bash
+```sh
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:3000. The frontend calls the API at `NEXT_PUBLIC_API_BASE` (default `http://127.0.0.1:8787`).
+Open [AppDNA](http://127.0.0.1:3000/tasks). The task UI proxies API calls to `http://127.0.0.1:8787`; set `APPDNA_API_URL` if the API runs elsewhere. The optional `NEXT_PUBLIC_API_BASE` overrides the browser API origin. Development and production outputs use separate directories.
 
-Copy `backend/.env.example` to `backend/.env` and fill in the provider keys. The `.env` file is gitignored. Do not commit it.
+## API key and Chatwoot setup
 
-`HCOMPANY_BASE_URL`, `HCOMPANY_MODEL`, `LINKUP_BASE_URL`, and `GLADIA_BASE_URL` select the provider endpoints. The learning engines do not hardcode those values.
+Open **[Connections](http://127.0.0.1:3000/settings) → AI model → API key**, paste your **H Company** key, and click **Save API key**. Saving takes effect immediately. The local API writes the ignored `backend/.env` with file mode `0600` and returns only whether a key is saved. The form clears after saving; it does not retrieve the saved value.
 
-Blender must be on `PATH`. If it is missing, the run fails and says so. A screenshot is never treated as verification.
+For actual execution, follow the [local Chatwoot setup](infra/chatwoot/README.md). Save the Chatwoot address, account/inbox IDs and API token in Connections, select the dedicated test account, then use **Sign in to Chatwoot**. Complete the login yourself in the browser window. Only the resulting local session is saved. Changing the target account invalidates the previous session and token.
 
-## Loop
+Linkup is optional under **Web search**. Without its key, research retrieves official Chatwoot documentation. Advanced provider endpoints/model names are in `backend/.env.example`; copy it only when starting without an existing `.env`. Secrets, browser sessions and generated sandbox credentials stay out of Git and the executor's structured prompt.
 
-Research uses Linkup and falls back to the official Blender manual only when Linkup returns nothing. An optional audio URL or file is transcribed with Gladia. H Company turns the corpus into claims and a Blender Python experiment. A second Blender process reopens the saved file and checks the object, mesh type, material, and that the file opens. The package is written under `backend/data/artifacts/`.
+## Demo flow
+
+1. Create the prefilled routing task.
+2. Run it, or open Run settings to adjust the action/time budget and saved-skill reuse.
+3. Observe actual browser captures, activity and pause/resume/stop controls.
+4. Inspect Results, including expected/actual routing, evidence and the selected run's JSON report.
+5. Add the VIP requirement. The follow-up retains the four original checks and adds three VIP checks.
+6. A completely passing run with an observed UI configuration change can save a skill. A fresh environment is required to demonstrate transfer.
+
+Routes: `/tasks`, `/tasks/[id]`, `/tasks/[id]/results`, `/knowledge`, `/settings`. The original experience is at `/explore` and `/projects/[id]`.
+
+The executor operates only the designated account's visible UI. The independent verifier creates withheld synthetic conversations and reads assignments/priorities; it never repairs automation rules. Missing dependencies and model failures remain explicit, with untested results kept untested.
+
+## Validation and current limits
+
+```sh
+cd backend
+python -m pytest tests/test_connections.py tests/test_tasks.py tests/test_core.py tests/test_visual.py tests/test_provider_connection.py -q
+cd ../frontend
+npm run typecheck
+npm run build
+npm audit
+```
+
+The prepared version passed **58 backend tests**, type checking, a production build and 20 responsive geometry checks. See the [implementation record](docs/implementation.md), [browser QA](docs/browser-qa.json) and [review](docs/review.md).
+
+The live Chatwoot preflight passed. The subsequent H Company inference request timed out before any browser action or independent routing check. Live routing success and fresh-session knowledge transfer remain unverified. The original Blender integration additionally requires Blender on `PATH`.
+
+PostCSS is pinned through a compatible override so Next.js 15 and the styling pipeline use the patched 8.5.32 release. The dependency audit reported zero vulnerabilities at preparation time. Official shadcn component sources and their MIT license are in `frontend/components/ui/`.

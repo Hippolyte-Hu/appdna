@@ -1,0 +1,20 @@
+[
+  {
+    "date": "2026-11-07",
+    "scope": "app",
+    "macrostructure": "Workbench",
+    "theme": "User-supplied AppDNA system",
+    "nav": "N3 productivity side rail",
+    "footer": "Ft2 inline",
+    "enrichment": "none",
+    "brief": "Northstar business-task computer-use console; actual execution evidence only"
+  },
+  {
+    "date": "2026-11-08",
+    "scope": "app",
+    "macrostructure": "Workbench",
+    "theme": "AppDNA sage / deep green",
+    "components": "Official shadcn/ui New York + Radix",
+    "brief": "Keep the clean layout; add DNA artwork and a restrained brand palette. Ant Design removed per user direction."
+  }
+]

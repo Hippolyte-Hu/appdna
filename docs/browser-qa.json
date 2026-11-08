@@ -1,0 +1,182 @@
+{
+  "checked_at": "2026-11-08T00:04:25.288Z",
+  "component_library": "shadcn/ui new-york (official CLI 4.23.0), Radix UI 1.8.1",
+  "styling": "Tailwind CSS 4.3.5",
+  "geometry_checks": [
+    {
+      "page": "/knowledge",
+      "documentWidth": 320,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 320
+    },
+    {
+      "page": "/settings",
+      "documentWidth": 320,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 320
+    },
+    {
+      "page": "/tasks",
+      "documentWidth": 320,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 320
+    },
+    {
+      "page": "/tasks/task_a8ce72de18a6",
+      "documentWidth": 320,
+      "overflow": [],
+      "width": 320,
+      "unnamedButtons": 0
+    },
+    {
+      "page": "/tasks/task_a8ce72de18a6/results",
+      "documentWidth": 320,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 320
+    },
+    {
+      "page": "/knowledge",
+      "documentWidth": 375,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 375
+    },
+    {
+      "page": "/settings",
+      "documentWidth": 375,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 375
+    },
+    {
+      "page": "/tasks",
+      "documentWidth": 375,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 375
+    },
+    {
+      "page": "/tasks/task_a8ce72de18a6",
+      "documentWidth": 375,
+      "overflow": [],
+      "width": 375,
+      "unnamedButtons": 0
+    },
+    {
+      "page": "/tasks/task_a8ce72de18a6/results",
+      "documentWidth": 375,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 375
+    },
+    {
+      "page": "/knowledge",
+      "documentWidth": 414,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 414
+    },
+    {
+      "page": "/settings",
+      "documentWidth": 414,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 414
+    },
+    {
+      "page": "/tasks",
+      "documentWidth": 414,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 414
+    },
+    {
+      "page": "/tasks/task_a8ce72de18a6",
+      "documentWidth": 414,
+      "overflow": [],
+      "width": 414,
+      "unnamedButtons": 0
+    },
+    {
+      "page": "/tasks/task_a8ce72de18a6/results",
+      "documentWidth": 414,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 414
+    },
+    {
+      "page": "/knowledge",
+      "documentWidth": 768,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 768
+    },
+    {
+      "page": "/settings",
+      "documentWidth": 768,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 768
+    },
+    {
+      "page": "/tasks",
+      "documentWidth": 768,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 768
+    },
+    {
+      "page": "/tasks/task_a8ce72de18a6",
+      "documentWidth": 768,
+      "overflow": [],
+      "width": 768,
+      "unnamedButtons": 0
+    },
+    {
+      "page": "/tasks/task_a8ce72de18a6/results",
+      "documentWidth": 768,
+      "overflow": [],
+      "unnamedButtons": 0,
+      "width": 768
+    }
+  ],
+  "long_title_check": {
+    "documentWidth": 375,
+    "headingWidth": 343,
+    "width": 375
+  },
+  "interactions": [
+    "Native required validation and real task creation",
+    "Save/reopen action budget, time limit and reuse checkbox",
+    "Search and running-status filter",
+    "Historical run selection, results navigation, reload and JSON export",
+    "Untested result drawer",
+    "Create VIP follow-up with seven checks",
+    "Read configured credential flags without exposing values",
+    "Chatwoot HTTP reachability probe",
+    "Mobile sheet navigation",
+    "Original native explorer visual check"
+  ],
+  "live_run": {
+    "task_id": "task_a8ce72de18a6",
+    "run_id": "run_23f7a2c4752e",
+    "status": "failed",
+    "stage": "understand",
+    "action_count": 0,
+    "check_count": 0,
+    "preflight_passed": true,
+    "error": "H Company inference ReadTimeout after 120 seconds"
+  },
+  "console_check": "Fresh browser tab after Tailwind migration and frontend restart",
+  "console_errors": [],
+  "console_warnings": [],
+  "limitations": [
+    "The live Chatwoot preflight passed; H Company inference timed out before any UI actions or checks.",
+    "No successful Chatwoot screenshot or learned skill has been fabricated.",
+    "Key persistence/redaction tested with a temporary env file; the UI does not return saved secrets."
+  ]
+}

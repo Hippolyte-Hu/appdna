@@ -14,11 +14,16 @@ from app.orchestrator import run_session
 from app.schemas import ProjectCreate
 from app.store import Store
 from app.util import loads, new_id, utcnow
+from app.tasks.api import router as task_router
+from app.tasks.persistence import recover_interrupted_runs
+from app.connections import router as connections_router
 
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".mp4", ".webm", ".ogg", ".flac"}
 MAX_AUDIO_BYTES = 25 * 1024 * 1024
 
 app = FastAPI(title="AppDNA", version="1.0.0")
+app.include_router(task_router)
+app.include_router(connections_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -30,6 +35,7 @@ app.add_middleware(
 @app.on_event("startup")
 def _startup() -> None:
     init_db()
+    recover_interrupted_runs()
 
 
 @app.get("/api/health")

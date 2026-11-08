@@ -102,3 +102,46 @@ class Activity(Base):
     phase: Mapped[str] = mapped_column(String(40))
     message: Mapped[str] = mapped_column(Text)
     created_at: Mapped[str] = mapped_column(String(40))
+
+
+class TaskRecord(Base):
+    __tablename__ = "tasks"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    title: Mapped[str] = mapped_column(String(200))
+    request: Mapped[str] = mapped_column(Text)
+    scenario: Mapped[str] = mapped_column(String(40))
+    software: Mapped[str] = mapped_column(String(80), default="Chatwoot")
+    software_version: Mapped[str] = mapped_column(String(80))
+    parent_id: Mapped[str | None] = mapped_column(ForeignKey("tasks.id"), nullable=True)
+    criteria_json: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[str] = mapped_column(String(40))
+
+
+class TaskRun(Base):
+    __tablename__ = "task_runs"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    task_id: Mapped[str] = mapped_column(ForeignKey("tasks.id"))
+    status: Mapped[str] = mapped_column(String(40), default="created")
+    stage: Mapped[str] = mapped_column(String(40), default="understand")
+    control: Mapped[str] = mapped_column(String(20), default="run")
+    max_actions: Mapped[int] = mapped_column(default=80)
+    timeout_seconds: Mapped[int] = mapped_column(default=600)
+    reuse_knowledge: Mapped[bool] = mapped_column(default=True)
+    state_json: Mapped[str] = mapped_column(Text, default="{}")
+    created_at: Mapped[str] = mapped_column(String(40))
+    updated_at: Mapped[str] = mapped_column(String(40))
+    ended_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+class OperationalKnowledge(Base):
+    __tablename__ = "operational_knowledge"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    software: Mapped[str] = mapped_column(String(80))
+    software_version: Mapped[str] = mapped_column(String(80))
+    operation: Mapped[str] = mapped_column(String(200))
+    run_id: Mapped[str] = mapped_column(ForeignKey("task_runs.id"))
+    content_json: Mapped[str] = mapped_column(Text)
+    validated_at: Mapped[str] = mapped_column(String(40))

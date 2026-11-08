@@ -1,0 +1,8 @@
+/* AppDNA typography; component colors are shadcn CSS variables in globals.css. */
+:root {
+  --font-body: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-body);
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-body);
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+}

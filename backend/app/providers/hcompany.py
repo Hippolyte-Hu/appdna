@@ -3,7 +3,7 @@ import json
 
 import httpx
 
-from app.providers.base import ProviderError
+from app.providers.base import ProviderError, ProviderTimeout
 
 _CONTROL_LIST_SCHEMA = {
     "type": "object",
@@ -255,15 +255,20 @@ class HCompanyProvider:
         return await self.complete_json(instructions, COMPUTER_ACTION_SCHEMA, "computer_actions")
 
     async def _post(self, body: dict) -> str:
-        async with httpx.AsyncClient(timeout=120) as client:
-            response = await client.post(
-                f"{self.base_url}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                json=body,
-            )
+        try:
+            async with httpx.AsyncClient(timeout=120) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json=body,
+                )
+        except httpx.TimeoutException:
+            raise ProviderTimeout("The AI model did not respond in time. Run the task again.") from None
+        except httpx.HTTPError:
+            raise ProviderError("The AI model could not be reached. Check its connection and try again.") from None
         if response.status_code >= 400:
             detail = response.text[:300].replace(self.api_key, "[redacted]")
             raise ProviderError(

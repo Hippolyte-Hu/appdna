@@ -15,6 +15,14 @@ class Settings(BaseSettings):
     gladia_api_key: str = ""
     gladia_base_url: str = "https://api.gladia.io"
     blender_bin: str = "blender"
+    chatwoot_base_url: str = "http://127.0.0.1:3001"
+    chatwoot_account_id: int = 1
+    chatwoot_inbox_id: int = 1
+    chatwoot_api_token: str = ""
+    chatwoot_version: str = "4.8.0"
+    chatwoot_storage_state: str = ""
+    chatwoot_test_environment: bool = False
+    browser_headless: bool = True
 
     model_config = SettingsConfigDict(
         env_file=BACKEND_ROOT / ".env",
@@ -37,6 +45,11 @@ class Settings(BaseSettings):
     @property
     def database_path(self) -> Path:
         return self.data_dir / "appdna.db"
+
+    @property
+    def browser_state_path(self) -> Path:
+        path = Path(self.chatwoot_storage_state or "data/chatwoot-session.json")
+        return path if path.is_absolute() else BACKEND_ROOT / path
 
 
 @lru_cache

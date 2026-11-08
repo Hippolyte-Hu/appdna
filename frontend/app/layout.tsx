@@ -1,35 +1,28 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans, Newsreader } from "next/font/google";
+import { Providers } from "@/components/providers";
+import "@fontsource/geist/400.css";
+import "@fontsource/geist/500.css";
+import "@fontsource/geist/600.css";
+import "@fontsource/geist/700.css";
+import "@fontsource/geist-mono/400.css";
+import "../tokens.css";
 import "./globals.css";
 
-const sans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-sans",
-});
-
-const serif = Newsreader({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  variable: "--font-serif",
-});
-
-const mono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-mono",
-});
-
 export const metadata: Metadata = {
-  title: "AppDNA",
-  description: "Teach AI any software by researching, testing, and packaging capabilities.",
+  title: "AppDNA — Learn software by doing",
+  description:
+    "Give an agent a business goal. Observe real software execution, verify outcomes, and keep validated knowledge.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body className={`${sans.variable} ${serif.variable} ${mono.variable} font-sans text-ink antialiased`}>
-        {children}
+      <body className="antialiased">
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

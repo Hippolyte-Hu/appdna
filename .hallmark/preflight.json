@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-08",
+  "scope": "app",
+  "framework": "Next.js 15 / React 19 / TypeScript; FastAPI / SQLite retained",
+  "original_fonts": "IBM Plex Sans, Newsreader, IBM Plex Mono (frontend/app/layout.tsx)",
+  "original_palette": "Dark green/orange explorer (frontend/app/globals.css, frontend/tailwind.config.ts)",
+  "direction_source": "User-supplied plan and subsequent interface feedback",
+  "fonts": "Locally bundled Geist and Geist Mono, as requested",
+  "palette": "Deep green primary, sage and warm-white surfaces, a small ochre accent in DNA artwork",
+  "spacing": "4px / 8px scale",
+  "motion": "Functional loader and dialog feedback; reduced motion supported",
+  "preserved": [
+    "Next.js routes and native explorer",
+    "FastAPI",
+    "SQLite",
+    "H Company and Linkup adapters",
+    "Existing global stylesheet directives"
+  ],
+  "introduced": [
+    "Business-task workspace",
+    "shadcn CSS variable theme",
+    "Actual-evidence states",
+    "Independent verification report",
+    "DNA brand artwork"
+  ],
+  "component_library": "Official shadcn/ui New York / Radix UI"
+}
