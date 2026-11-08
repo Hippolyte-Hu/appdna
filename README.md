@@ -8,6 +8,59 @@ Motion2Action helps people answer two connected questions: **What can this appli
 
 > Previously named **AppDNA**. The repository, Python identifiers, environment variables and some internal labels retain that name for compatibility.
 
+## See the app in action
+
+These are **real captures of the running local product**, not mockups. The retained demo knowledge and run are local evidence; a fresh clone starts with an empty catalog.
+
+### 1. Define what you want to assess
+
+Choose an application or website and an assessment objective. The workspace explains the evidence and exploration boundaries before starting.
+
+![Motion2Action assessment workspace with application scope and objective](docs/images/assessment-workspace.png)
+
+### 2. Review what the video-learning agent actually learned
+
+The saved Blender workflow contains semantic instructions and clickable source time ranges—not a recording of mouse coordinates. Source checking and execution remain separate.
+
+![Six actual learned Blender steps with source timestamps and expandable evidence](docs/images/learned-workflow.png)
+
+### 3. Inspect the separate execution receipt
+
+The receipt below belongs to the retained successful Blender run. The embedded application capture illustrates the run; the **separate saved-artifact checks** establish the supported result. [Check report and measured values →](docs/EVALUATION.md)
+
+![Actual execution receipt reporting independent source-bound artifact checks and showing the captured Blender state](docs/images/verified-execution.png)
+
+## Technical architecture at a glance
+
+Solid arrows describe the current video workflow. **Linkup already serves assessment research**; using it inside the dedicated video learner is a proposed extension. Devin is not active in this runtime.
+
+```mermaid
+flowchart TD
+    IN["Authorized tutorial video + scoped objective"] --> MEDIA["FFmpeg / FFprobe: audio + timestamped initial frames"]
+    MEDIA --> ASR["Gladia: timestamped transcript"]
+    MEDIA --> LEARN["Source-only learning agent · Holo4-27B"]
+    ASR --> LEARN
+    LEARN --> TOOLS["Read transcript intervals / inspect exact frames / crop controls"]
+    TOOLS --> LEARN
+    LEARN --> CHECK["Separate model source checks against cited evidence"]
+    CHECK -->|Accepted| KNOW["Saved knowledge + semantic steps + provenance"]
+    CHECK -->|Insufficient support| LEARN
+    KNOW --> REVIEW["Learning Showcase · human review"]
+    REVIEW -->|Explicit approval| EXEC["Separate Holo4 GUI executor · fresh screenshots + real input"]
+    EXEC --> SAVE["Dedicated scratch Blender · GUI save"]
+    SAVE --> VERIFY["Read-only bpy artifact inspection + source / target hash binding"]
+    VERIFY --> RECEIPT["Independent check report + execution receipt"]
+    subgraph FUTURE["Proposed extensions · not used in the recorded video workflow"]
+        LINK["Linkup: version-aware documentation retrieval"]
+        DEV["Devin: approved engineering handoff + tests + reviewed PR"]
+    end
+    LINK -.->|Supplementary cited sources| LEARN
+    EXEC -.->|Sanitized failure report + user approval| DEV
+    DEV -.->|Review changes, then rerun and reverify| EXEC
+```
+
+**How the video is segmented:** the pipeline extracts audio and an initial frame index, then the learner selects transcript intervals and exact timestamps on demand. It constructs evidence-linked step intervals; it does **not** blindly split fixed-duration clips into actions or replay tutorial coordinates. [Full visual walkthrough, model/tool roles and extension design →](docs/WORKFLOWS.md#8-visual-walkthrough-and-extension-points)
+
 ## Why this matters
 
 Before buying software or preparing user acceptance testing, teams must reconcile vendor documentation, demo videos and what the product actually does. Watching a demo is not the same as testing the workflow, and a confident agent summary is not proof of completion.

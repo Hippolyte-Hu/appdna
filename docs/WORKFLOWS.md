@@ -204,3 +204,64 @@ Frontend **`/api/learning/*`** forwards only allowlisted catalog/detail/asset an
 5. **Keep scope bounded:** one concrete verifier is more auditable than claiming universal completion from a model's own judgment.
 
 For measured results, known failures and commands that distinguish regression tests from live execution, see [Evaluation & evidence](EVALUATION.md).
+
+## 8. Visual walkthrough and extension points
+
+### Review the actual saved lesson
+
+![Actual Learning Showcase workflow steps with source time ranges](images/learned-workflow.png)
+
+This capture shows the retained local Blender lesson: **6 steps and 19 timestamped frames**. Those counts describe this lesson, not guaranteed output sizes. The video player is the original teaching source, not an agent-produced artifact. The workflow and execution receipt screenshots on the [project overview](../README.md#see-the-app-in-action) show the next stages.
+
+### Temporal evidence, not arbitrary clip summaries
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Media as FFmpeg + Gladia
+    participant Agent as Holo4 source learner
+    participant Tools as Bounded source tools
+    participant Gate as Source-check requests
+    participant Store as Local knowledge files
+    User->>Media: Authorized video + learning objective
+    Media-->>Agent: Duration, sampled timestamps, timestamped transcript
+    loop Until evidence is sufficient or budget is exhausted
+        Agent->>Tools: Choose transcript interval or exact frames / crop
+        Tools-->>Agent: Narration, original images, citation IDs, uncertainties
+    end
+    Agent->>Gate: Semantic steps + expected results + cited time intervals
+    Gate-->>Agent: Supported or issues to investigate
+    alt Every step accepted
+        Agent->>Store: Save source-checked knowledge and plan
+    else Ambiguous, stopped or budget exhausted
+        Agent-->>User: Needs input / blocked / stopped - no invented success
+    end
+```
+
+Initial frames provide orientation, not fixed action boundaries. The learner can inspect any valid source timestamp and compare nearby images with narration. It then groups evidence into semantic step intervals. There is no claim of a scene-cut detector, embedding database, model fine-tuning, or frame-by-frame full-video ingestion.
+
+### Where Linkup fits
+
+**Already implemented:** the application-assessment research stage calls the Linkup provider and filters source relevance. **Proposed:** expose a bounded documentation-search tool to the dedicated video learner, which currently only reads its supplied video and transcript.
+
+For example, an unreadable or renamed Blender control could trigger retrieval of the matching official manual and software-version notes. Keep the source URL, product/version identity and cited excerpt; reject a similarly named but different product. Supplemental documentation must remain distinguishable from video evidence. Conflicts should lead to more inspection or human input, not silently replace a tutorial's target values.
+
+### Where Devin fits
+
+**Proposed only:** an optional engineering escalation after a reproducible failure. Devin would not replace the current Holo4 desktop executor or become an automatic verifier.
+
+```mermaid
+flowchart LR
+    FAIL["Blocked execution + retained evidence"] --> APPROVE["User approves sanitized engineering handoff"]
+    APPROVE --> TASK["Devin session: repo context + failure + acceptance criteria"]
+    TASK --> PR["Proposed fix + regression tests + reviewable PR"]
+    PR --> REVIEW["Human code review and approved integration"]
+    REVIEW --> RUN["Fresh scratch execution"]
+    RUN --> CHECK["Independent artifact checks"]
+```
+
+A future adapter could use Devin's Sessions API to create and track a scoped task. Share only approved, sanitized evidence; exclude provider credentials and private recordings. Keep budget and repository permissions explicit. A PR or passing unit tests is not proof that the GUI workflow now succeeds: rerun the task and recheck the saved artifact before changing its verification status.
+
+### Reproducing the documentation captures
+
+`backend/.venv/bin/python docs/capture_showcase.py` captures read-only views from an already-running local frontend. It requires Playwright/Chromium and the retained demo source/run IDs; it does not seed data, start an execution, or claim a fresh trial. A new clone must first create its own authorized knowledge and execution, then adapt the IDs. Screenshots are documentation assets; raw media, runtime jobs and credentials remain excluded from Git.
