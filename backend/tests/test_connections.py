@@ -120,3 +120,27 @@ def test_sign_in_requires_test_account_and_reports_unreachable_server(local_setu
     assert "not reachable" in response.json()["detail"]
     assert client.get("/api/connections/chatwoot/login").json()["status"] == "idle"
     assert connections._login_task is None
+
+
+def test_sign_in_accepts_chatwoot_redirect_to_app_login(local_setup, monkeypatch):
+    client, _, _, _ = local_setup
+    client.put("/api/connections/chatwoot", json=target())
+    visited = []
+
+    def handler(request):
+        visited.append(request.url.path)
+        if request.url.path == "/auth/sign_in":
+            return httpx.Response(302, headers={"location": "/app/login"})
+        return httpx.Response(200, text="Local Chatwoot sign-in")
+
+    original_client = httpx.AsyncClient
+    monkeypatch.setattr(httpx, "AsyncClient", lambda **kwargs: original_client(transport=httpx.MockTransport(handler), **kwargs))
+
+    async def no_browser(settings):
+        pass
+
+    monkeypatch.setattr(connections, "browser_sign_in", no_browser)
+    response = client.post("/api/connections/chatwoot/login")
+    assert response.status_code == 200
+    assert response.json()["status"] == "opening"
+    assert visited == ["/auth/sign_in", "/app/login"]

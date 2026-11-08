@@ -21,3 +21,37 @@ def test_transport_failure_does_not_expose_credentials(monkeypatch, failure, exp
         asyncio.run(provider.complete_json("Return an object", {"type": "object"}, "test"))
     assert "test-key" not in str(error.value)
     assert "transport detail" not in str(error.value)
+
+
+def test_temporary_timeout_is_retried_once_then_recovers(monkeypatch):
+    calls = []
+    class Client:
+        def __init__(self, **_): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *_): pass
+        async def post(self, *_args, **_kwargs):
+            calls.append(1)
+            if len(calls) == 1:
+                raise httpx.ReadTimeout('temporary stall')
+            return httpx.Response(200, json={'choices': [{'message': {'content': '{"ok":true}'}}]})
+    monkeypatch.setattr(httpx, 'AsyncClient', Client)
+    provider = HCompanyProvider('test-key', 'https://api.hcompany.ai/v1', 'holo4-27b')
+    assert asyncio.run(provider.complete_json('Return an object', {'type': 'object'}, 'test')) == {'ok': True}
+    assert len(calls) == 2
+
+
+def test_invalid_credentials_are_not_retried_or_echoed(monkeypatch):
+    calls = []
+    class Client:
+        def __init__(self, **_): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *_): pass
+        async def post(self, *_args, **_kwargs):
+            calls.append(1)
+            return httpx.Response(401, text='Rejected test-key')
+    monkeypatch.setattr(httpx, 'AsyncClient', Client)
+    provider = HCompanyProvider('test-key', 'https://api.hcompany.ai/v1', 'holo4-27b')
+    with pytest.raises(ProviderError) as error:
+        asyncio.run(provider.complete_json('Return an object', {'type': 'object'}, 'test'))
+    assert len(calls) == 1
+    assert 'test-key' not in str(error.value)

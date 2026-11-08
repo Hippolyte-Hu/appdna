@@ -26,11 +26,15 @@ Tasks and run history persist in SQLite. SSE reports actual state; controls and 
 
 The verifier's test messages are withheld from the executor. It writes only synthetic contacts/conversations and reads results; it never repairs assignments, priority or automation rules. VIP follow-ups retain the original four assertions and add three more. Reusable knowledge needs every required check, an executed UI action and a real before/after configuration change. Merely retesting already-correct rules does not establish transfer.
 
-Model transport timeouts, access failures and rate limits now create actionable blocked records without echoing credentials or upstream diagnostics. Historical records remain intact.
+The browser agent uses Holo's native function-calling protocol, matching tool-result IDs and screenshot observations. It retains three recent images, a rolling visual conversation and a durable action ledger. Research results are recorded as actions, official documentation excludes site navigation, and exhausted research is removed from the allowed tool set. Retry feedback includes only previous expected/actual outcomes, never the withheld message fixtures.
+
+Inference has a 45-second request timeout and one retry for transient transport/status failures. Authentication failures are not retried. The runner's independent wall-clock and cancellation guards stay responsive, and model/version/latency metadata is recorded without credentials or private reasoning. A stale executor exits when another API process has recovered its run.
+
+Opening an action dropdown is allowed even when its menu also lists email/webhook actions; choosing those forbidden actions remains blocked. Skills are reconstructed locally from executed UI steps with action/screenshot references. Documentation examples cannot add unexecuted skill operations. Superseded artifacts and all original run evidence are retained.
 
 ## Verification
 
-- `python -m pytest tests/test_connections.py tests/test_tasks.py tests/test_core.py tests/test_visual.py tests/test_provider_connection.py -q`: **58 passed**. Covers persistence, independent HTTP contracts, hidden-test separation, control/cancellation, knowledge admission, secret handling and the observed model-timeout failure path.
+- `python -m pytest tests/test_connections.py tests/test_tasks.py tests/test_core.py tests/test_visual.py tests/test_provider_connection.py tests/test_browser_agent.py tests/test_grounded_knowledge.py -q`: **73 passed**. Covers persistence, independent HTTP contracts, hidden-test separation, control/cancellation, restart recovery, grounded knowledge admission, native tool conversation, bounded retries and secret handling.
 - `npm run typecheck` and `npm run build`: passed on Next.js 15.5.29. Development output is isolated from production output. Node.js 22+ is required by the generated component stack.
 - `npm audit`: **zero vulnerabilities** after updating PostCSS to 8.5.32 and applying its compatible override to Next.js.
 - Five pages × 320/375/414/768px: **20 geometry checks passed**. Labeled Radix checkbox controls were checked through their associated labels. Long task names, mobile navigation and the model-error layout were inspected. See `browser-qa.json`.
@@ -41,19 +45,22 @@ Model transport timeouts, access failures and rate limits now create actionable 
 
 ## Live acceptance status
 
-The live attempt **`run_23f7a2c4752e`** reached the real Chatwoot preflight, then failed during H Company task planning with a 120-second read timeout. `GET /v1/models` returned 200 and listed `holo4-27b`; a separate minimal 64-token inference request timed out at 30 seconds. This establishes API reachability/model listing, not working inference or model entitlement.
+The original attempt **`run_23f7a2c4752e`** failed during H Company planning with a 120-second read timeout and performed no UI actions. That failed record is preserved. On 2026-11-08, actual planning and multimodal inference returned successfully. Later execution exposed harness problems: repeated research without useful history, an unsuitable stateless agent contract, a dropdown permission false positive, and incorrect message-field selection. These were fixed without supplying a scripted navigation path.
 
-The attempt contains zero UI actions, zero verification results and no screenshot or saved skill. It did not alter the routing configuration. The timeout-handling improvement is covered by isolated regression tests; the historical record is not rewritten.
+Base routing subsequently passed **4/4** independent checks in **`run_9fafa2b75467`** using **`holo4-35b-a3b`** and actual UI configuration changes. It recorded 29 actions, including wait/research, and saved verified knowledge. See [live-demo.md](live-demo.md) for the current follow-up results, request timing, evidence checksums and limits. This does not establish the cause of the earlier upstream transport stall or guarantee future provider availability.
 
 - [x] Repository integration audit and new branch.
 - [x] Task/run/evidence/control/knowledge implementations.
 - [x] Independent verifier contracts and local connection setup.
 - [x] shadcn interface, brand styling and responsive/browser validation.
 - [x] Live Chatwoot API preflight.
-- [ ] M0 model-driven live UI action.
-- [ ] M1–M4 complete routing, negative/VIP checks and fresh-session knowledge transfer.
+- [x] M0 model-driven live UI action.
+- [x] M1–M2 actual routing creation, independent positive/negative checks and observed failed configurations.
+- [ ] M3 cold/reuse comparison in a clean environment.
+- [x] M4 VIP follow-up, skill reuse and seven independent checks, including complaint precedence.
+- [x] M5 complete browser-driven demo, actual screenshots, evidence inspection and report export.
 
-The interface and implementation are reviewable. A live successful run and transfer claim still depend on completing model inference and the acceptance checks above. The original Blender integration test also requires Blender on PATH, absent on this machine.
+The interface and live base run are reviewable. Clean-environment transfer and a cold/reuse performance comparison remain unmeasured. The original Blender integration test also requires Blender on PATH, absent on this machine.
 
 ## Primary references
 
@@ -62,5 +69,7 @@ The interface and implementation are reviewable. A live successful run and trans
 - [Create conversation API](https://developers.chatwoot.com/api-reference/conversations/create-new-conversation)
 - [Chatwoot Docker deployment](https://developers.chatwoot.com/self-hosted/deployment/docker)
 - [H Models API](https://hub.hcompany.ai/models-api/overview)
+- [Holo agent core concepts](https://hub.hcompany.ai/models-api/build-an-agent/core-concepts)
+- [Holo function calling](https://hub.hcompany.ai/models-api/build-an-agent/function-calling)
 - [shadcn Next.js setup](https://ui.shadcn.com/docs/installation/next)
 - [shadcn Tailwind 4](https://ui.shadcn.com/docs/tailwind-v4)

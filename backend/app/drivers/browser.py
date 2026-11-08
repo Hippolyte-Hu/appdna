@@ -1,14 +1,19 @@
 """A scoped browser surface. The model gets screenshots/visible controls, never an API client."""
 
 import hashlib
+import re
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-from app.providers.base import ProviderError
 
 
 class BrowserBlocked(Exception):
     pass
+
+
+def prohibited_routing_action(label: str) -> bool:
+    return bool(re.search(r"\b(delete|send\s+(?:(?:a|an)\s+)?(?:email|message|attachment)|webhook|sign\s*out)\b",
+                          " ".join(label.casefold().split())))
 
 
 def safe_ui_url(url: str, base_url: str, account_id: int) -> str:
@@ -81,12 +86,21 @@ class BrowserDriver:
           const items = [...document.querySelectorAll('button,a,input,textarea,select,[role="button"],[role="combobox"],[role="option"],[role="tab"],[role="checkbox"]')];
           return items.filter(el => {
             const r = el.getBoundingClientRect();
-            return r.width > 0 && r.height > 0 && r.top < innerHeight && r.bottom > 0 &&
-              getComputedStyle(el).visibility !== 'hidden' && !el.disabled && el.type !== 'password' && el.type !== 'hidden';
+            const x = Math.max(0, Math.min(innerWidth - 1, r.x + r.width / 2));
+            const y = Math.max(0, Math.min(innerHeight - 1, r.y + r.height / 2));
+            const hit = document.elementFromPoint(x, y);
+            return r.width > 0 && r.height > 0 && r.top < innerHeight && r.bottom > 0 && r.left < innerWidth && r.right > 0 &&
+              getComputedStyle(el).visibility !== 'hidden' && !el.disabled && el.type !== 'password' && el.type !== 'hidden' &&
+              hit && (el === hit || el.contains(hit));
           }).slice(0, 100).map((el, i) => {
             el.setAttribute('data-appdna-target', String(i + 1));
-            const label = el.getAttribute('aria-label') || el.labels?.[0]?.innerText || el.innerText || el.getAttribute('placeholder') || el.getAttribute('title') || el.name || el.tagName;
-            return {id: i + 1, tag: el.tagName.toLowerCase(), role: el.getAttribute('role'), label: label.trim().slice(0, 240),
+            const r = el.getBoundingClientRect();
+            const visibleText = el.tagName === 'SELECT' ? el.selectedOptions?.[0]?.textContent : el.innerText;
+            const label = el.getAttribute('aria-label') || el.labels?.[0]?.innerText || visibleText || el.getAttribute('placeholder') || el.getAttribute('title') || el.name || el.tagName;
+            let href = null;
+            if (el.tagName === 'A') { const url = new URL(el.href, location.origin); if (url.origin === location.origin && !url.search && !url.hash) href = url.href; }
+            return {id: i + 1, tag: el.tagName.toLowerCase(), role: el.getAttribute('role'), label: label.trim().slice(0, 240), href,
+              bounds: {x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height)},
               options: el.tagName === 'SELECT' ? [...el.options].map(o => ({label: o.text, value: o.value})) : []};
           });
         }""")
@@ -106,9 +120,13 @@ class BrowserDriver:
         elif kind in {"click", "type", "select"}:
             target = action.get("target")
             if target not in self.controls:
-                raise BrowserBlocked("The requested control was not in the current observation. Observe again.")
+                raise ValueError("The requested control was not in the current observation. Observe again.")
             control = self.controls[target]
-            if kind == "click" and any(word in control["label"].lower() for word in ("delete", "send email", "send message", "webhook", "sign out")):
+            # Opening a select does not choose every option in its menu. Validate
+            # the requested option on selection, and actionable labels on clicks.
+            if (kind == "select" and prohibited_routing_action(text)) or (
+                kind == "click" and control["tag"] != "select" and prohibited_routing_action(control["label"])
+            ):
                 raise BrowserBlocked("The requested control is outside routing configuration permissions.")
             locator = self.page.locator(f'[data-appdna-target="{target}"]')
             if kind == "click":
@@ -131,21 +149,3 @@ class BrowserDriver:
             raise BrowserBlocked("Unsupported browser action.")
         await self.page.wait_for_timeout(350)
         return "UI action executed; outcome requires the next observation and independent verification."
-
-
-ACTION_SCHEMA = {
-    "type": "object", "additionalProperties": False,
-    "properties": {
-        "kind": {"type": "string", "enum": ["navigate", "click", "type", "select", "key", "scroll", "wait", "research", "done"]},
-        "target": {"type": "integer"}, "text": {"type": "string"},
-        "summary": {"type": "string"},
-    }, "required": ["kind", "target", "text", "summary"],
-}
-
-
-async def next_action(provider, context: str, image: bytes) -> dict:
-    # Reuse the existing multimodal provider transport; no second inference stack.
-    result = await provider._look(context, [image], ACTION_SCHEMA, "browser_action")
-    if result.get("kind") not in ACTION_SCHEMA["properties"]["kind"]["enum"]:
-        raise ProviderError("Model returned an unsupported browser action.")
-    return result

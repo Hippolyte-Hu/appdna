@@ -21,7 +21,7 @@ _INPUTS = {
     "unrelated": ("Do you offer your products in a different colour?", False),
     "vip_refund": ("Please arrange a refund for my returned purchase.", True),
     "vip_delivery": ("Where is the delivery of my latest purchase?", True),
-    "vip_complaint": ("I have a serious complaint about an unsafe product. This is urgent.", True),
+    "vip_complaint": ("I have a serious complaint about an unsafe delivery and need a refund. This is urgent.", True),
 }
 
 
@@ -35,6 +35,12 @@ def actual_result(record: dict, teams: dict[int, str]) -> dict | None:
     elif "team_id" in record:
         name = teams.get(record["team_id"], f"Unknown team #{record['team_id']}") if record["team_id"] else None
     elif "team" in meta or "team" in record:
+        name = None
+    elif (meta.get("channel") == "Channel::Api"
+          and all(isinstance(record.get(key), int) and record[key] > 0 for key in ("id", "account_id", "inbox_id"))
+          and record.get("status") in {"open", "resolved", "pending", "snoozed"}):
+        # The pinned conversation serializer omits meta.team when no team is assigned.
+        # Require the complete API conversation identity; an arbitrary partial response stays unknown.
         name = None
     else:
         return None

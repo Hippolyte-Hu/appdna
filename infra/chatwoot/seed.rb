@@ -13,7 +13,7 @@ if user.new_record?
 end
 AccountUser.find_or_create_by!(account: account, user: user) { |membership| membership.role = :administrator }
 %w[Billing Logistics].push('Customer Care').each do |name|
-  Team.find_or_create_by!(account: account, name: name)
+  Team.find_or_create_by!(account: account, name: name.downcase)
 end
 inbox = account.inboxes.find_by(name: 'AppDNA synthetic inbox')
 unless inbox
@@ -29,5 +29,6 @@ token = user.access_token || user.create_access_token!
 FileUtils.mkdir_p('/app/appdna-output')
 File.write('/app/appdna-output/connection.json', JSON.generate({account_id: account.id, inbox_id: inbox.id, api_token: token.token}))
 File.chmod(0600, '/app/appdna-output/connection.json')
+Redis::Alfred.delete(Redis::Alfred::CHATWOOT_INSTALLATION_ONBOARDING)
 puts "Prepared Northstar account #{account.id}, API inbox #{inbox.id}, three teams and the customer_tier attribute."
 puts 'Connection details saved to the local ignored output directory. Existing automation rules were not modified.'

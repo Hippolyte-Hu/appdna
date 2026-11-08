@@ -51,15 +51,15 @@ The executor operates only the designated account's visible UI. The independent 
 
 ```sh
 cd backend
-python -m pytest tests/test_connections.py tests/test_tasks.py tests/test_core.py tests/test_visual.py tests/test_provider_connection.py -q
+python -m pytest tests/test_connections.py tests/test_tasks.py tests/test_core.py tests/test_visual.py tests/test_provider_connection.py tests/test_browser_agent.py tests/test_grounded_knowledge.py -q
 cd ../frontend
 npm run typecheck
 npm run build
 npm audit
 ```
 
-The prepared version passed **58 backend tests**, type checking, a production build and 20 responsive geometry checks. See the [implementation record](docs/implementation.md), [browser QA](docs/browser-qa.json) and [review](docs/review.md).
+The current backend passed **73 tests**. The interface revision passed type checking, a production build and 20 responsive geometry checks. See the [implementation record](docs/implementation.md), [browser QA](docs/browser-qa.json) and [review](docs/review.md).
 
-The live Chatwoot preflight passed. The subsequent H Company inference request timed out before any browser action or independent routing check. Live routing success and fresh-session knowledge transfer remain unverified. The original Blender integration additionally requires Blender on `PATH`.
+The live Chatwoot demo now passes **4/4 base checks** and **7/7 VIP follow-up checks**, with verified skill reuse and actual H Company browser operations using `holo4-35b-a3b`. The original model timeout remains in run history. The browser agent now uses Holo's native function-calling conversation, bounded retries, durable action/research history and recorded request timings. Skills are reconstructed locally from executed UI actions after verification. See the [live acceptance record](docs/live-demo.md) for run IDs, screenshots and the independently detected precedence failure before the successful repair. Fresh-environment transfer has not been measured. The original Blender integration additionally requires Blender on `PATH`.
 
 PostCSS is pinned through a compatible override so Next.js 15 and the styling pipeline use the patched 8.5.32 release. The dependency audit reported zero vulnerabilities at preparation time. Official shadcn component sources and their MIT license are in `frontend/components/ui/`.

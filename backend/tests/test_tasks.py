@@ -153,6 +153,18 @@ def test_verifier_accepts_chatwoot_lowercase_team_names_without_weakening_outcom
     assert compare(criteria("routing")[3], {"team": "billing", "priority": "default"}) == "failed"
 
 
+def test_chatwoot_unassigned_conversation_omits_team_only_in_complete_response():
+    record = {"id": 1, "account_id": 2, "inbox_id": 2, "status": "open", "priority": None,
+              "meta": {"channel": "Channel::Api", "sender": {"id": 1}, "hmac_verified": False}}
+    actual = actual_result(record, {1: "billing"})
+    assert actual == {"team": None, "priority": "default"}
+    assert compare(criteria("routing")[3], actual) == "passed"
+    assert compare(criteria("routing")[0], actual) == "failed"
+    assert actual_result({key: value for key, value in record.items() if key != "account_id"}, {}) is None
+    assert actual_result({**record, "inbox_id": None}, {}) is None
+    assert actual_result({**record, "meta": {}}, {}) is None
+
+
 def test_hidden_inputs_and_verifier_credentials_never_enter_agent_context(database):
     task = make_task()
     run = store.new_run(task["id"], 80, 600, True)
@@ -290,3 +302,63 @@ def test_model_failure_is_actionable_and_never_creates_evidence(database, monkey
     assert result["actions"] == result["verifications"] == []
     assert not result.get("observation")
     assert store.list_knowledge() == []
+
+
+def test_superseded_skill_is_retained_but_not_reused(database):
+    from app.models import OperationalKnowledge
+    run=store.new_run(make_task()['id'],80,600,True)
+    checks=[{'id':item['id'],'status':'passed'} for item in criteria('routing')]
+    store.update_run(run['id'],verifications=checks,configuration_changed=True,actions=[{'kind':'type','outcome':'executed'}])
+    content={'preconditions':[],'procedure':['Observed UI action'],'completion_check':['Independent checks passed'],
+             'unresolved':[],'permissions':['Administrator'],'source_refs':[],'related_runs':[run['id']]}
+    previous=store.save_knowledge(run['id'],'4.8.0',dict(content))
+    replacement=store.save_knowledge(run['id'],'4.8.0',{**content,'grounding_version':2})
+    store.supersede_knowledge(previous['id'],replacement['id'])
+    assert [row['id'] for row in store.list_knowledge()]==[replacement['id']]
+    assert store.get_run(run['id'])['verifications']==checks
+    with store.session_scope() as session:
+        original=session.get(OperationalKnowledge,previous['id'])
+        assert json.loads(original.content_json)['superseded_by']==replacement['id']
+
+
+def test_recovered_run_cannot_be_revived_by_its_old_executor(database, monkeypatch):
+    monkeypatch.setattr('app.tasks.runner.environment_status', lambda: {
+        'software': 'Chatwoot', 'version': '4.8.0', 'url': 'http://127.0.0.1:3001',
+        'account_id': 1, 'inbox_id': 1, 'checks': [{'ready': True}],
+    })
+
+    class Verifier:
+        def __init__(self, *_): pass
+        async def preflight(self): return {1: 'Billing', 2: 'Logistics', 3: 'Customer Care'}
+        async def configuration_snapshot(self): return []
+        async def close(self): pass
+
+    monkeypatch.setattr('app.tasks.verification.ChatwootVerifier', Verifier)
+
+    async def scenario():
+        began, cancelled = asyncio.Event(), asyncio.Event()
+
+        class SlowProvider:
+            def __init__(self, *_): pass
+            async def complete_json(self, *_):
+                began.set()
+                try:
+                    await asyncio.sleep(30)
+                finally:
+                    cancelled.set()
+
+        monkeypatch.setattr('app.tasks.runner.HCompanyProvider', SlowProvider)
+        task = make_task()
+        old = store.new_run(task['id'], 80, 600, True)
+        executor = asyncio.create_task(execute_run(old['id']))
+        await asyncio.wait_for(began.wait(), timeout=2)
+        store.recover_interrupted_runs()
+        recovered = store.get_run(old['id'])
+        new = store.new_run(task['id'], 80, 600, True)
+        await asyncio.wait_for(executor, timeout=2)
+        assert cancelled.is_set()
+        assert store.get_run(old['id']) == recovered
+        assert store.get_run(new['id'])['status'] == 'created'
+        assert store.get_run(old['id'])['actions'] == []
+
+    asyncio.run(scenario())

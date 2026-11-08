@@ -208,7 +208,7 @@ async def start_login(request: Request):
     if _login_task and not _login_task.done():
         raise HTTPException(409, "A Chatwoot sign-in is already open.")
     try:
-        async with httpx.AsyncClient(timeout=4) as client:
+        async with httpx.AsyncClient(timeout=4, follow_redirects=True) as client:
             response = await client.get(settings.chatwoot_base_url.rstrip("/") + "/auth/sign_in")
             response.raise_for_status()
     except httpx.HTTPError:

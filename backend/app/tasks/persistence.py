@@ -150,7 +150,29 @@ def list_knowledge(version: str | None = None) -> list[dict]:
         query = db.query(OperationalKnowledge).order_by(OperationalKnowledge.validated_at.desc())
         if version is not None:
             query = query.filter_by(software="Chatwoot", software_version=version)
-        return [knowledge_dict(row) for row in query.all()]
+        return [knowledge_dict(row) for row in query.all() if not json.loads(row.content_json).get("superseded_by")]
+
+
+def supersede_knowledge(previous_id: str, replacement_id: str):
+    """Retain the original artifact while replacing its reusable, grounded version."""
+    with session_scope() as db:
+        previous = db.get(OperationalKnowledge, previous_id)
+        replacement = db.get(OperationalKnowledge, replacement_id)
+        if not previous or not replacement or previous.run_id != replacement.run_id:
+            raise ValueError("Knowledge replacement must use the same verified run.")
+        content = json.loads(replacement.content_json)
+        if content.get("grounding_version") != 2:
+            raise ValueError("Replacement knowledge must be grounded in recorded actions.")
+        original = json.loads(previous.content_json)
+        original["superseded_by"] = replacement_id
+        previous.content_json = json.dumps(original)
+        run = db.get(TaskRun, replacement.run_id)
+        state = json.loads(run.state_json)
+        state.setdefault("knowledge_revisions", []).append({"previous": previous_id, "replacement": replacement_id,
+                                                            "reason": "Grounded procedure in the existing verified UI trace", "at": utcnow()})
+        state["saved_knowledge_id"] = replacement_id
+        run.state_json = json.dumps(state)
+        db.commit()
 
 
 def save_knowledge(run_id: str, version: str, content: dict) -> dict:
@@ -167,7 +189,8 @@ def save_knowledge(run_id: str, version: str, content: dict) -> dict:
         value = content.get(key)
         if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
             raise ValueError(f"Knowledge must contain a structured {key} list.")
-        content[key] = [item[:2000] for item in value[:50]]
+        limit = 150 if key == "procedure" and content.get("grounding_version") == 2 else 50
+        content[key] = [item[:2000] for item in value[:limit]]
     if not content["procedure"] or not content["completion_check"] or not content["permissions"]:
         raise ValueError("Knowledge needs a procedure, completion check and required permissions.")
     with session_scope() as db:

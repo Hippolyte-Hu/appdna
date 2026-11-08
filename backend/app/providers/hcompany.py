@@ -1,9 +1,15 @@
 import base64
 import json
+import asyncio
+import logging
+import time
 
 import httpx
 
 from app.providers.base import ProviderError, ProviderTimeout
+
+logger = logging.getLogger("appdna.providers.hcompany")
+_OUTPUT_BUDGETS = {"business_task_plan": 512, "browser_action": 768, "validated_operation": 2048}
 
 _CONTROL_LIST_SCHEMA = {
     "type": "object",
@@ -85,6 +91,7 @@ class HCompanyProvider:
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.model = model
+        self.last_response_metadata: dict = {}
 
     def build_chat_request(self, messages: list[dict], schema: dict | None, schema_name: str) -> dict:
         body: dict = {
@@ -92,7 +99,7 @@ class HCompanyProvider:
             "messages": messages,
             "temperature": 0,
             "reasoning_effort": "none",
-            "max_tokens": 4096,
+            "max_tokens": _OUTPUT_BUDGETS.get(schema_name, 4096),
         }
         if schema is not None:
             body["response_format"] = {
@@ -234,7 +241,7 @@ class HCompanyProvider:
         messages = [
             {
                 "role": "system",
-                "content": "You learn software by looking at it. Return only the JSON object.",
+                "content": "You learn software by looking at it. Return only a JSON object matching this action contract:\n" + json.dumps(schema),
             },
             {"role": "user", "content": content},
         ]
@@ -254,21 +261,49 @@ class HCompanyProvider:
         )
         return await self.complete_json(instructions, COMPUTER_ACTION_SCHEMA, "computer_actions")
 
-    async def _post(self, body: dict) -> str:
+    async def complete_browser_tool(self, messages: list[dict], tools: list[dict]) -> dict:
+        """Holo4's native agent protocol; never return or replay its reasoning field."""
+        body = {"model": self.model, "messages": messages, "tools": tools,
+                "tool_choice": "required", "temperature": 0.8, "max_tokens": 2048,
+                "chat_template_kwargs": {"enable_thinking": True}}
+        if self.model == "holo4-27b":
+            body["reasoning_effort"] = "low"
+        payload = await self._request(body)
         try:
-            async with httpx.AsyncClient(timeout=120) as client:
-                response = await client.post(
-                    f"{self.base_url}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json=body,
-                )
-        except httpx.TimeoutException:
-            raise ProviderTimeout("The AI model did not respond in time. Run the task again.") from None
-        except httpx.HTTPError:
-            raise ProviderError("The AI model could not be reached. Check its connection and try again.") from None
+            calls = payload["choices"][0]["message"]["tool_calls"]
+            call = calls[0]
+            if not call.get("id") or call.get("type") != "function":
+                raise ValueError("Missing function call")
+            return {"id": call["id"], "type": "function",
+                    "function": {"name": call["function"]["name"], "arguments": call["function"]["arguments"]}}
+        except (KeyError, IndexError, TypeError, ValueError):
+            raise ProviderError("The AI model did not return a browser tool call.") from None
+
+    async def _request(self, body: dict) -> dict:
+        # Inference is read-only: retry one transient failure, while the runner can
+        # cancel either the request or the backoff through its wall-clock guard.
+        started = time.monotonic()
+        for attempt in range(2):
+            try:
+                async with httpx.AsyncClient(timeout=httpx.Timeout(45, connect=10)) as client:
+                    response = await client.post(
+                        f"{self.base_url}/chat/completions",
+                        headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+                        json=body,
+                    )
+            except httpx.HTTPError as exc:
+                if attempt == 0:
+                    logger.warning("Retrying H Company inference after %s", type(exc).__name__)
+                    await asyncio.sleep(0.5)
+                    continue
+                if isinstance(exc, httpx.TimeoutException):
+                    raise ProviderTimeout("The AI model did not respond in time. Run the task again.") from None
+                raise ProviderError("The AI model could not be reached. Check its connection and try again.") from None
+            if response.status_code in {408, 429, 502, 503, 504} and attempt == 0:
+                logger.warning("Retrying H Company inference after HTTP %s", response.status_code)
+                await asyncio.sleep(0.5)
+                continue
+            break
         if response.status_code >= 400:
             detail = response.text[:300].replace(self.api_key, "[redacted]")
             raise ProviderError(
@@ -276,6 +311,16 @@ class HCompanyProvider:
                 status=response.status_code,
             )
         payload = response.json()
+        usage = payload.get("usage") or {}
+        self.last_response_metadata = {
+            "requested_model": body["model"], "reported_model": payload.get("model"),
+            "elapsed_ms": round((time.monotonic() - started) * 1000), "attempts": attempt + 1,
+            "prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens"),
+        }
+        return payload
+
+    async def _post(self, body: dict) -> str:
+        payload = await self._request(body)
         try:
             content = payload["choices"][0]["message"].get("content")
         except (KeyError, IndexError, TypeError) as exc:
