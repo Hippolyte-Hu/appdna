@@ -56,7 +56,7 @@ export default function HomePage() {
           </div>
           <form onSubmit={onSubmit} className="space-y-4 p-5 sm:p-6">
             <Field label="Application name or website URL" name="software_name" defaultValue="Blender" placeholder="Blender, VoiceCue, or https://www.canva.com/settings/your-account" />
-            <p className="!mt-2 text-xs leading-5 text-ink/60">Web pages open in an isolated browser, not your personal session. Account pages may require authorized sign-in; AppDNA stops at authentication gates.</p>
+            <p className="!mt-2 text-xs leading-5 text-ink/60">Web pages open in an isolated browser, not your personal session. Account pages may require authorized sign-in; Motion2Action stops at authentication gates.</p>
             <div className="grid gap-3">
               <Field label="Version (optional)" name="software_version" defaultValue="" placeholder="If known" />
               <p className="text-xs leading-5 text-ink/65">App names target an installed Mac application. URLs target an isolated browser page. Only authorized test environments should be assessed.</p>
@@ -115,7 +115,7 @@ export default function HomePage() {
           </section>
         </div>
       </div>
-      <footer className="mt-8 flex flex-wrap justify-between gap-3 border-t border-line pt-5 text-xs text-ink/60"><span>AppDNA / Application intelligence</span><span>Decision support. Not procurement approval or formal UAT sign-off.</span></footer>
+      <footer className="mt-8 flex flex-wrap justify-between gap-3 border-t border-line pt-5 text-xs text-ink/60"><span>Motion2Action / Application intelligence</span><span>Decision support. Not procurement approval or formal UAT sign-off.</span></footer>
     </main>
   );
 }

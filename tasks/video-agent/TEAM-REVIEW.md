@@ -1,5 +1,7 @@
 # Teammate review guide — WIP snapshot
 
+> **Historical checkpoint, not current readiness guidance.** The two RED sandbox requirements described below were subsequently implemented. For current workflows, regression results and the successful source-bound Blender artifact reinspection, start with [the README](../../README.md), [workflow guide](../../docs/WORKFLOWS.md) and [evaluation](../../docs/EVALUATION.md). Do not apply this checkpoint's test totals or execution prohibition to the newer implementation; keep current safety gates enabled.
+
 Branch: `feat/appdna-video-learning-agent`. This is a review checkpoint, not a release. Source code, tests, design contracts, and the English workbench are included. Credentials, raw evidence, downloaded tutorial media, generated deliverables, caches, and local execution state are not included.
 
 ## What changed

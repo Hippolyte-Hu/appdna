@@ -1,0 +1,64 @@
+{
+  "description": "Sanitized summary of a retained local execution receipt; raw media, artifact and machine-specific paths are not included. Independent read-only reinspection was also executed during documentation review; this is not a new GUI run or fresh-learning trial.",
+  "review_date": "2026-11-08",
+  "execution_id": "bb98cc914ecf4be385ea4eda0bc01e6c",
+  "source_job_id": "825b2bf417154c019c55f869fd9567cc",
+  "title": "Bevel Modifier: Round a Cube (Blender 4.4)",
+  "action_model": "holo4-27b",
+  "reuse_note": "Reused checked knowledge and media; no new download, transcription or learning.",
+  "verification": "verified",
+  "scope": "blender_bevel_v1",
+  "checks": {
+    "shape": true,
+    "affect": true,
+    "width_type": true,
+    "limit_method": true,
+    "width": true,
+    "segments": true,
+    "angle_limit_degrees": true,
+    "smooth_shading": true,
+    "smooth_by_angle": true,
+    "one_visible_bevel": true,
+    "evaluated_geometry_rounded": true
+  },
+  "expected": {
+    "shape": "cube",
+    "affect": "VERTICES",
+    "width_type": "OFFSET",
+    "limit_method": "ANGLE",
+    "width": 0.24,
+    "segments": 4,
+    "angle_limit_degrees": 30,
+    "smooth_shading": true,
+    "smooth_by_angle": true
+  },
+  "measured": {
+    "width": 0.23999999463558197,
+    "segments": 4,
+    "affect": "VERTICES",
+    "width_type": "OFFSET",
+    "limit_method": "ANGLE",
+    "angle_limit_degrees": 30.000000834826057,
+    "shape": "cube",
+    "smooth_shading": true,
+    "smooth_by_angle": true
+  },
+  "target_binding_sha256": "84ed18f5b15f641b2270e533a095c6d000b0f9ce5c9c4924c658a5d260cfb652",
+  "source_sha256": "ad40a764d96413f43fc7097423775eb17f3bc02a213ec1ddbb8e59c43e3c9289",
+  "artifact": "replica.blend",
+  "artifact_sha256": "9f28901c3c4f49c325dc52e2a8b5f458715be547ab4f7cd94a4396704024b9ce",
+  "read_only_hash_unchanged": true,
+  "inspection_blender_version": "5.2.0 LTS",
+  "source_target_check": {
+    "supported": true,
+    "issues": []
+  },
+  "documentation_review_reinspection": {
+    "process_exit_code": 0,
+    "binding_valid": true,
+    "verification": "verified",
+    "passed_checks": 11,
+    "artifact_hash_matches_retained_receipt": true,
+    "artifact_unchanged": true
+  }
+}

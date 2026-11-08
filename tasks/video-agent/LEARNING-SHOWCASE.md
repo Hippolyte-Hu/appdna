@@ -1,5 +1,7 @@
 # Learning Showcase — implementation contract
 
+> **Implementation-time contract and historical acceptance receipt.** Its statements about no new verified artifact describe that checkpoint. A later source-bound execution and independent reinspection are documented in [Evaluation & evidence](../../docs/EVALUATION.md); see [the README](../../README.md) for current setup and product naming.
+
 ## User intent
 Show the results of an already learned video inside the existing AppDNA application. Explain how results are saved. One explicit Run with Agent action reuses the saved workflow and opens the application for real GUI execution.
 

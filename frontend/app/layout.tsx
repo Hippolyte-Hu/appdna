@@ -21,7 +21,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AppDNA",
+  title: "Motion2Action",
   description: "Evidence-led software assessments for procurement and internal pre-UAT reviews.",
 };
 

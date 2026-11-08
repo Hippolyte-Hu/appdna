@@ -32,7 +32,7 @@ export function SavedLearning({ id, knowledge }: { id: string; knowledge: VideoK
         <p>A local knowledge package, not model training or hidden chat memory. Reuse loads this saved package without downloading or learning the video again.</p>
         <dl className="showcase-files"><dt>knowledge.json</dt><dd>Instructions, expected results, timestamps, frame references, source checks and limitations.</dd><dt>plan.json</dt><dd>The reusable GUI workflow. The executor grounds actions against the current app, not tutorial coordinates.</dd><dt>agent_frames/</dt><dd>The saved frames and crops used to check the source.</dd><dt>run/</dt><dd>Each new execution gets its own screenshots, action log and artifact checks. These are not copied from previous runs.</dd></dl>
         <p className="break-all font-mono text-xs">tasks/video-agent/evidence/jobs/{id}/knowledge.json</p>
-        <p className="text-xs">Not yet published to AppDNA’s main skill graph. Source checking does not establish successful app execution.</p>
+        <p className="text-xs">Not yet published to Motion2Action’s main skill graph. Source checking does not establish successful app execution.</p>
         <a className="showcase-secondary" href={`${LEARNING_API}/video-sources/${id}`} download>Download knowledge JSON</a>
       </div></details>
     </div>

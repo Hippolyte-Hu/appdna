@@ -23,7 +23,7 @@ async function bridge(request: NextRequest, context: { params: Promise<{ path: s
       if (!response.ok) throw new Error("Could not check desktop availability");
       const projects: { status: string }[] = await response.json();
       if (projects.some(project => !["completed", "failed"].includes(project.status))) {
-        return Response.json({ detail: "An AppDNA assessment is using the desktop. Wait for it to finish." }, { status: 409 });
+        return Response.json({ detail: "A Motion2Action assessment is using the desktop. Wait for it to finish." }, { status: 409 });
       }
     }
     const headers = new Headers();
