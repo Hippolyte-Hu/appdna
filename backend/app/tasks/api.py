@@ -149,6 +149,12 @@ def knowledge():
     return store.list_knowledge()
 
 
+@router.get("/knowledge/graph")
+def graph():
+    from app.tasks.graph import knowledge_graph
+    return knowledge_graph()
+
+
 @router.get("/environments")
 def environments():
     return environment_status()

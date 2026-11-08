@@ -60,7 +60,15 @@ Base routing subsequently passed **4/4** independent checks in **`run_9fafa2b754
 - [x] M4 VIP follow-up, skill reuse and seven independent checks, including complaint precedence.
 - [x] M5 complete browser-driven demo, actual screenshots, evidence inspection and report export.
 
-The [fresh-install transfer record](transfer-demo.md) now covers M3: independent empty databases, explicit source skill IDs, all attempts, safe retry entry points and complete successful transfer verification. The new API can freeze a source skill set; the profile harness uses the production orchestrator without changing shared live connections. Workspace links use the recorded environment. Current checks passed **86 backend tests**, frontend type checking and the production build. The single observed comparison does not establish a general performance gain; the cold arm never reached a complete pass. The original Blender integration still requires a Blender executable on PATH.
+The [fresh-install transfer record](transfer-demo.md) now covers M3: independent empty databases, explicit source skill IDs, all attempts, safe retry entry points and complete successful transfer verification. The new API can freeze a source skill set; the profile harness uses the production orchestrator without changing shared live connections. Workspace links use the recorded environment. Current checks passed **92 backend tests**, frontend type checking and the production build. The single observed comparison does not establish a general performance gain; the cold arm never reached a complete pass. The original Blender integration still requires a Blender executable on PATH.
+
+## Interactive learning graph
+
+Knowledge now opens a 3D graph built from persisted skills and their actual evidence relationships. The existing shadcn/Radix controls surround a client-only `react-force-graph-3d` renderer. Search, type highlighting, orbit/zoom, selection and a detail inspector lead directly to saved procedures, exact run results and documentation. The Skills table remains available.
+
+The read-only `/api/knowledge/graph` projection excludes superseded skills and unrelated runs. It preserves failed and blocked reuse attempts and mixed check outcomes. Layout depth groups node types; it is not a learned similarity score. The API omits withheld message fixtures, raw target records, action payloads, credentials and browser state.
+
+The local acceptance snapshot contains 22 nodes and 73 links, including four saved skills, eight runs and seven outcome checks. Six new backend tests cover relationship integrity, empty/incomplete evidence and data minimization. Real browser checks covered WebGL, direct sphere picking, keyboard search, exact-result navigation, skill details, label/type controls and responsive widths. See [knowledge-graph.md](knowledge-graph.md), [QA record](knowledge-graph-qa.json) and the captured screenshots.
 
 ## Primary references
 

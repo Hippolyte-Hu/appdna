@@ -42,6 +42,7 @@ Linkup is optional under **Web search**. Without its key, research retrieves off
 4. Inspect Results, including expected/actual routing, evidence and the selected run's JSON report.
 5. Add the VIP requirement. The follow-up retains the four original checks and adds three VIP checks.
 6. A completely passing run with an observed UI configuration change can save a skill. A fresh environment is required to demonstrate transfer.
+7. Open **Knowledge → 3D graph** to explore the app, saved skills, source/reuse runs, independent checks and documentation. Rotate or zoom the graph, search for a node, then open its actual skill or result. The **Skills** tab retains the table view.
 
 Routes: `/tasks`, `/tasks/[id]`, `/tasks/[id]/results`, `/knowledge`, `/settings`. The original experience is at `/explore` and `/projects/[id]`.
 
@@ -51,14 +52,14 @@ The executor operates only the designated account's visible UI. The independent 
 
 ```sh
 cd backend
-python -m pytest tests/test_connections.py tests/test_tasks.py tests/test_core.py tests/test_visual.py tests/test_provider_connection.py tests/test_browser_agent.py tests/test_grounded_knowledge.py tests/test_sandbox_setup.py -q
+python -m pytest tests/test_connections.py tests/test_tasks.py tests/test_core.py tests/test_visual.py tests/test_provider_connection.py tests/test_browser_agent.py tests/test_grounded_knowledge.py tests/test_sandbox_setup.py tests/test_knowledge_graph.py -q
 cd ../frontend
 npm run typecheck
 npm run build
 npm audit
 ```
 
-The current backend passed **86 tests**, and the frontend passed type checking and a production build. The interface revision also passed 20 responsive geometry checks. See the [implementation record](docs/implementation.md), [browser QA](docs/browser-qa.json) and [review](docs/review.md).
+The current backend passed **92 tests**, and the frontend passed type checking and a production build. The interface revision also passed 20 responsive geometry checks. The [3D knowledge graph](docs/knowledge-graph.md) was checked with real WebGL rendering, node selection, evidence navigation and 320/375/1440px layouts. See the [implementation record](docs/implementation.md), [browser QA](docs/browser-qa.json) and [review](docs/review.md).
 
 The live Chatwoot demo passes **4/4 base checks** and **7/7 VIP follow-up checks** using `holo4-35b-a3b`. A later [fresh-install transfer experiment](docs/transfer-demo.md) began with zero rules, contacts and conversations: two frozen saved skills reached **7/7 after one correction**; the independent no-skill control remained **6/7 across three observed attempts**. All attempts are recorded; no one-shot or general speedup claim is made.
 

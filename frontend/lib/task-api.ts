@@ -6,6 +6,7 @@ import type {
   Run,
   Task,
 } from "./task-types";
+import type { KnowledgeGraphData } from "./knowledge-graph";
 
 export const TASK_API = process.env.NEXT_PUBLIC_API_BASE ?? "";
 export const TERMINAL = new Set([
@@ -70,6 +71,8 @@ export const getEnvironment = () => request<Environment>("/environments");
 export const probeEnvironment = () =>
   request<Environment>("/environments/probe", { method: "POST" });
 export const listKnowledge = () => request<Knowledge[]>("/knowledge");
+export const getKnowledgeGraph = () =>
+  request<KnowledgeGraphData>("/knowledge/graph");
 export const getConnections = () => request<Connections>("/connections");
 export const saveModelKey = (api_key: string) =>
   request<Connections>("/connections/model", {

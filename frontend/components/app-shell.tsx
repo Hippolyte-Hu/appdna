@@ -24,7 +24,7 @@ import { useConnections } from "./providers";
 
 const NAV = [
   { path: "/tasks", label: "Tasks", icon: LayoutList },
-  { path: "/knowledge", label: "Saved skills", icon: BookOpen },
+  { path: "/knowledge", label: "Knowledge", icon: BookOpen },
   { path: "/settings", label: "Connections", icon: Cable },
 ];
 
@@ -45,12 +45,7 @@ export function AppShell({
     : path.startsWith("/settings")
       ? "/settings"
       : "/tasks";
-  const label =
-    section === "Knowledge"
-      ? "Saved skills"
-      : section === "Settings"
-        ? "Connections"
-        : section;
+  const label = section === "Settings" ? "Connections" : section;
   const nav = (
     <nav className="sidebar-nav" aria-label="Main navigation">
       {NAV.map((item) => (

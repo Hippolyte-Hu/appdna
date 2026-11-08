@@ -1,0 +1,131 @@
+{
+  "checked_at": "2026-11-08T12:04:38.615049+00:00",
+  "route": "/knowledge",
+  "api": "/api/knowledge/graph",
+  "data": {
+    "nodes": 22,
+    "links": 73,
+    "counts": {
+      "run": 8,
+      "check": 7,
+      "app": 1,
+      "skill": 4,
+      "source": 2
+    },
+    "relations": {
+      "checked": 46,
+      "contains": 4,
+      "learned_in": 4,
+      "references": 8,
+      "reused_in": 11
+    },
+    "run_statuses": {
+      "completed": 4,
+      "failed": 3,
+      "blocked": 1
+    },
+    "missing_endpoints": 0,
+    "content_sha256_excluding_generated_at": "fc255aef3e64305fe41f4ad51951b1033501e9387fedce8adc6e46ce375a0324"
+  },
+  "backend": {
+    "tests_passed": 92,
+    "graph_tests": 6,
+    "warnings": 3,
+    "warnings_detail": "Existing FastAPI startup/AnyIO deprecations"
+  },
+  "frontend": {
+    "typecheck": "passed",
+    "production_build": "passed",
+    "knowledge_first_load_js_kb": 186,
+    "renderer": "react-force-graph-3d 1.29.2",
+    "three": "0.187.0",
+    "ui": "Existing official shadcn/ui New York / Radix"
+  },
+  "browser": {
+    "engine": "ChatGPT in-app browser",
+    "webgl_rendered": true,
+    "console_errors": 0,
+    "console_warnings": 0,
+    "verified_interactions": [
+      "Orbit by dragging",
+      "Zoom in",
+      "Fit / Reset view",
+      "Sphere picking",
+      "Search + Enter selects an actual node",
+      "Highlight node type",
+      "Show all node labels",
+      "Skills tab retains four saved skills",
+      "View skill opens the recorded 24-step procedure",
+      "Run link opens exact 7/7 result page",
+      "Documentation node exposes actual source URL"
+    ],
+    "responsive_geometry": [
+      {
+        "viewport_width": 1440,
+        "document_width": 1440,
+        "canvas_width": 838
+      },
+      {
+        "viewport_width": 375,
+        "document_width": 375,
+        "canvas_width": 341
+      },
+      {
+        "viewport_width": 320,
+        "document_width": 320,
+        "canvas_width": 286
+      }
+    ],
+    "temporary_viewport_override_reset": true,
+    "webgl_unavailable_fallback": "Implemented; not forced during browser QA"
+  },
+  "traced_evidence": {
+    "check": "VIP serious complaints",
+    "passed": 3,
+    "failed": 3,
+    "run_id": "run_fe3a440452ef",
+    "result": "7/7",
+    "recorded_actions": 25,
+    "skill_id": "knowledge_455d25f556ea",
+    "demonstrated_steps": 24
+  },
+  "screenshots": [
+    {
+      "path": "docs/screenshots/knowledge-graph.jpg",
+      "size": [
+        1440,
+        1027
+      ],
+      "sha256": "ea2d0b7dabf8306e726cef6e98982e95a9ab5f34eda1b615d9d9cacac2dabfe2"
+    },
+    {
+      "path": "docs/screenshots/knowledge-graph-check.jpg",
+      "size": [
+        1440,
+        1048
+      ],
+      "sha256": "647c0917f18fd00ca6e82e7944d9dea2687a395f082242c8e4f711adef6bea00"
+    },
+    {
+      "path": "docs/screenshots/knowledge-graph-skill.jpg",
+      "size": [
+        1440,
+        1038
+      ],
+      "sha256": "bdba045a5bd63d80e32dcd8dec9cfc5e15f5f7670815bcf29c58b2519c8766e1"
+    },
+    {
+      "path": "docs/screenshots/knowledge-graph-mobile.jpg",
+      "size": [
+        320,
+        1378
+      ],
+      "sha256": "11c9e1768579e33a42692c118c3f10d25509ee406a1f4706666d4312a77a2f4e"
+    }
+  ],
+  "limits": [
+    "Graph is a read-only projection of persisted evidence; no new model execution was needed.",
+    "Depth/layer position is a navigation layout, not a learned similarity score.",
+    "The graph contains skills and their actual source/reuse runs, not every unrelated historical run."
+  ]
+}
