@@ -40,6 +40,12 @@ export async function getProject(id: string): Promise<ProjectDetail> {
   return response.json();
 }
 
+export async function resumeProject(id: string): Promise<ProjectSummary> {
+  const response = await fetch(`${API_BASE}/api/projects/${id}/resume`, { method: "POST" });
+  if (!response.ok) throw new Error(await errorText(response));
+  return response.json();
+}
+
 export function packageUrl(id: string): string {
   return `${API_BASE}/api/projects/${id}/package`;
 }
@@ -47,6 +53,9 @@ export function packageUrl(id: string): string {
 export function frameUrl(id: string, image: string): string {
   return `${API_BASE}/api/projects/${id}/frames/${image}`;
 }
+
+export const mediaUrl = (id: string, name: string) => `${API_BASE}/api/projects/${id}/media/${encodeURIComponent(name)}`;
+export const reportUrl = (id: string) => `${API_BASE}/api/projects/${id}/report`;
 
 export function previewUrl(id: string, version: string): string {
   return `${API_BASE}/api/projects/${id}/preview?v=${encodeURIComponent(version)}`;
@@ -76,4 +85,11 @@ async function errorText(response: Response): Promise<string> {
   } catch {
     return `Request failed (${response.status})`;
   }
+}
+
+// Uploaded video sources belong to the API origin, not the Next.js origin.
+export function sourceUrl(url: string): string {
+  if (/^https?:\/\//i.test(url)) return url;
+  if (/^\/api\/projects\/[A-Za-z0-9_-]+\/media\/original$/.test(url)) return `${API_BASE}${url}`;
+  return "#";
 }

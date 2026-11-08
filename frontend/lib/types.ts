@@ -1,6 +1,8 @@
 export type ProjectSummary = {
   id: string;
   software_name: string;
+  target_url: string | null;
+  target_kind: "website" | "desktop";
   software_version: string | null;
   learning_objective: string;
   status: string;
@@ -11,7 +13,14 @@ export type ProjectSummary = {
   preview_ready: boolean;
 };
 
-export type ProjectDetail = ProjectSummary & {
+export interface ProjectDetail extends ProjectSummary {
+  transcripts: { id: string; start: number; end: number; text: string; language: string | null; speaker: string | null }[];
+  can_resume: boolean;
+  media?: {
+    duration: number; has_video: boolean; has_audio: boolean; source_sha256: string;
+    frames: { image: string; timestamp: number }[];
+    observations: { timestamp: number; result: { same_product?: boolean; product_reason?: string; observations?: { capability: string; control: string; observation: string }[]; limitations?: string[] }; error?: string }[];
+  } | null;
   activities: { phase: string; message: string; created_at: string }[];
   sources: {
     id: string;
@@ -22,6 +31,8 @@ export type ProjectDetail = ProjectSummary & {
     reliability: string;
     license: string | null;
     excerpt: string;
+    content: string;
+    relevant?: boolean | null;
   }[];
   claims: {
     id: string;
@@ -65,4 +76,24 @@ export type ProjectDetail = ProjectSummary & {
     image_height: number;
     executed: boolean;
   }[];
+  outcome: {
+    evaluation: {
+      summary: string;
+      verdict: string;
+      strengths: string[];
+      gaps: string[];
+    };
+    skills: {
+      id: string;
+      name: string;
+      use_when: string;
+      steps: string[];
+      tools: string[];
+      status: string;
+    }[];
+    graph: {
+      nodes: { id: string; label: string; kind: string }[];
+      edges: { source: string; target: string; label: string }[];
+    };
+  };
 };

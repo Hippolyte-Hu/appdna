@@ -11,6 +11,7 @@ class Project(Base):
 
     id: Mapped[str] = mapped_column(String(40), primary_key=True)
     software_name: Mapped[str] = mapped_column(String(200))
+    target_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     software_version: Mapped[str | None] = mapped_column(String(80), nullable=True)
     learning_objective: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(40), default="created")

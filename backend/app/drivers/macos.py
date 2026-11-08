@@ -34,6 +34,7 @@ class WindowBounds:
     y: int
     width: int
     height: int
+    app_name: str = ""
 
 
 def assert_safe(action: dict) -> None:
@@ -83,8 +84,19 @@ class MacOSDriver:
           tell process "{app_name}"
             set frontmost to true
             if (count of windows) is 0 then return "nowindow"
-            set p to position of window 1
-            set s to size of window 1
+            set targetWindow to window 1
+            set largestArea to 0
+            repeat with candidate in windows
+              set candidateSize to size of candidate
+              set candidateArea to (item 1 of candidateSize) * (item 2 of candidateSize)
+              if candidateArea > largestArea then
+                set largestArea to candidateArea
+                set targetWindow to candidate
+              end if
+            end repeat
+            set p to position of targetWindow
+            set s to size of targetWindow
+            perform action "AXRaise" of targetWindow
             return (item 1 of p as text) & "," & (item 2 of p as text) & "," & (item 1 of s as text) & "," & (item 2 of s as text)
           end tell
         end tell
@@ -95,9 +107,12 @@ class MacOSDriver:
         parts = [int(float(item)) for item in result.split(",")]
         if len(parts) != 4 or parts[2] <= 0 or parts[3] <= 0:
             return None
-        return WindowBounds(*parts)
+        self.target_app = app_name
+        time.sleep(0.3)  # AXRaise is asynchronous; wait before sampling screen pixels.
+        return WindowBounds(*parts, app_name=app_name)
 
     def capture(self, bounds: WindowBounds, path: Path) -> tuple[Path, int, int]:
+        self._require_foreground(bounds.app_name)
         path.parent.mkdir(parents=True, exist_ok=True)
         region = f"{bounds.x},{bounds.y},{bounds.width},{bounds.height}"
         completed = subprocess.run(
@@ -108,23 +123,35 @@ class MacOSDriver:
         )
         if completed.returncode != 0 or not path.exists():
             raise VisualExploreError(completed.stderr.strip() or "screen capture failed")
+        self._require_foreground(bounds.app_name)
         _limit_image_size(path, 1440)
         return path, *_image_size(path)
 
     def click(self, x: int, y: int, *, double: bool = False) -> None:
         ensure_accessibility()
+        self._require_foreground(getattr(self, "target_app", ""))
         _post_click(int(x), int(y), double=double)
 
+    def _require_foreground(self, app_name: str) -> None:
+        if not app_name:
+            return
+        active = _osascript('tell application "System Events" to get name of first application process whose frontmost is true')
+        if active.casefold() != app_name.casefold():
+            raise VisualExploreError(f"The foreground app changed from {app_name}; refusing to capture or click another app.")
+
     def type_text(self, text: str) -> None:
+        self._require_foreground(getattr(self, "target_app", ""))
         escaped = _apple_string(text)
         _osascript(f'tell application "System Events" to keystroke "{escaped}"')
 
     def key(self, name: str) -> None:
+        self._require_foreground(getattr(self, "target_app", ""))
         code = KEY_CODES[name.lower()]
         _osascript(f"tell application \"System Events\" to key code {code}")
 
     def scroll(self, bounds: WindowBounds, direction: str) -> None:
         ensure_accessibility()
+        self._require_foreground(bounds.app_name)
         anchor_x = bounds.x + bounds.width // 2
         anchor_y = bounds.y + bounds.height // 2
         # Positive line deltas reveal what is above; negative deltas reveal what is below.

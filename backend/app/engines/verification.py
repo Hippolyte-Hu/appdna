@@ -59,6 +59,9 @@ def _covered_capabilities(capabilities: list[Capability], selected: Capability, 
     checks = report.get("checks") or {}
     covered = []
     for item in capabilities:
+        # A scene created by a separate bpy experiment cannot validate a GUI action.
+        if getattr(item, "verification_status", "") in {"experimented", "observed"}:
+            continue
         text = f"{item.name} {item.description}".lower()
         mesh_hit = bool(checks.get("object_type_mesh")) and any(token in text for token in ("cube", "primitive"))
         material_hit = bool(checks.get("material_assigned")) and "material" in text

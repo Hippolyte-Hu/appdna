@@ -2,6 +2,18 @@
 
 Teach an agent to acquire a software capability, then keep it only when an independent test passes.
 
+## Current review snapshot — WIP
+
+Branch: `feat/appdna-video-learning-agent`.
+
+Start with [the teammate review guide](tasks/video-agent/TEAM-REVIEW.md) for the implemented flow, entry points, exact test status, and remaining safety work. This branch includes the application/UI work and the independently invocable Holo4 video-learning Agent; it is **not a completed end-to-end demo**.
+
+**Do not run the tutorial GUI/save stage yet.** A real run saved to a previous scratch directory rather than the requested destination. The previous artifact was restored from a hash-matching backup, but filesystem write confinement is not implemented. Two new safety regression tests are intentionally still RED. Backend status at publication: **183 passed, 2 failed**, 3 deprecation warnings.
+
+Keys, downloaded videos, raw source evidence, recordings, generated reports, and local execution state are deliberately excluded from GitHub. Provider credentials belong only in ignored `backend/.env`.
+
+The sections below describe the original AppDNA flow; the review guide documents the newer video-learning workbench and its current limitations.
+
 The first learning target is Blender: create a cube and assign a material.
 
 ## Layout

@@ -10,14 +10,32 @@
 
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse at top, rgba(61, 255, 176, 0.09), transparent 36%),
-    radial-gradient(ellipse at 85% 0%, rgba(255, 138, 91, 0.08), transparent 28%),
-    #07080d;
+  background: #0c1119;
+  margin: 0;
 }
 
 ::selection {
   background: rgba(61, 255, 176, 0.28);
+}
+
+.graph-canvas .evidence-node {
+  background: #101820;
+  border-width: 1px;
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: #f3efe4;
+  text-align: left;
+  box-shadow: 0 4px 20px #0004;
+}
+.graph-canvas .evidence-node.selected { border-color: #a6d8bd !important; box-shadow: 0 0 0 1px rgba(166,216,189,.35); }
+.graph-canvas .evidence-node strong { display: block; font-size: 14px; line-height: 1.5; font-weight: 500; }
+.graph-node-kind { display: block; margin-bottom: 5px; color: #9ba9ba; text-transform: uppercase; font-size: 11px; letter-spacing: 0.14em; }
+.graph-canvas .react-flow__controls-button { width: 44px; height: 44px; background: #18232e; color: #f3efe4; border-color: #334354; }
+.graph-canvas .react-flow__controls-button:hover { background: #263746; }
+.graph-canvas .react-flow__minimap { background: #101820; border: 1px solid #334354; border-radius: 8px; }
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__edge-path { animation: none !important; }
+  .cube, .scan::after { animation: none !important; }
 }
 
 .stage {
@@ -62,4 +80,50 @@ body {
 @keyframes scan {
   from { transform: translateY(-100%); }
   to { transform: translateY(100%); }
+}
+
+/* AppDNA workspace: semantic surfaces, restrained hierarchy, visible focus. */
+.workspace-header { min-height: 76px; display: flex; align-items: center; gap: 20px; border-bottom: 1px solid #2a3546; }
+.workspace-brand { display: inline-flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 500; letter-spacing: -0.04em; color: #e9edf3; }
+.workspace-brand svg { color: #a6d8bd; }
+.workspace-divider { height: 18px; width: 1px; background: #334054; }
+.workspace-intro { display: flex; flex-direction: column; gap: 20px; padding: 28px 0 24px; }
+.eyebrow { color: #a6d8bd; font-family: var(--font-mono), monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; line-height: 1.6; }
+.workspace-note { align-self: flex-start; color: #adb8c7; font-size: 12px; border: 1px solid #2a3546; border-radius: 6px; padding: 9px 12px; }
+.workspace-panel { border: 1px solid #2a3546; border-radius: 14px; background: #111822; overflow: hidden; }
+.panel-heading { padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid #2a3546; }
+.panel-index { font-family: var(--font-mono), monospace; font-size: 12px; color: #a6d8bd; border: 1px solid #34453e; border-radius: 6px; padding: 7px 9px; }
+.workspace-input { min-width: 0; min-height: 44px; border: 1px solid #354359; background: #0c121b; padding: 11px 12px; border-radius: 7px; color: #f3efe4; font-size: 14px; line-height: 1.5; transition: border-color .15s; }
+.workspace-input::placeholder { color: #96a3b5; }
+.workspace-input:hover { border-color: #55647a; }
+.workspace-primary { min-height: 44px; display: inline-flex; justify-content: center; align-items: center; gap: 36px; background: #a6d8bd; color: #10261c; border: 1px solid #a6d8bd; border-radius: 7px; padding: 10px 16px; font-size: 13px; font-weight: 600; transition: background .15s; }
+.workspace-primary:hover { background: #bce6ce; }
+.workspace-primary:disabled { cursor: wait; opacity: .6; }
+.workspace-upload { border: 1px dashed #354359; border-radius: 7px; padding: 10px; background: #0c121b; }
+.workspace-upload::file-selector-button { margin-right: 12px; border: 1px solid #3b495e; border-radius: 4px; padding: 7px 9px; background: #1c2837; color: #f3efe4; font: inherit; cursor: pointer; }
+.review-method { padding: 4px 24px 12px; }
+.review-method li { display: grid; grid-template-columns: 24px 1fr; gap: 12px; padding: 18px 0; }
+.review-method li + li { border-top: 1px solid #263141; }
+.review-method li > span { font-family: var(--font-mono), monospace; font-size: 10px; padding-top: 3px; color: #a6d8bd; }
+.review-method h3 { font-size: 14px; font-weight: 500; }
+.review-method p { margin-top: 5px; color: #adb8c7; font-size: 13px; line-height: 1.7; }
+.run-row { display: block; padding: 16px 24px; border-bottom: 1px solid #263141; transition: background .15s; }
+.run-row:last-child { border-bottom: 0; }
+.run-row:hover { background: #192433; }
+.run-status { flex-shrink: 0; border: 1px solid #354359; border-radius: 4px; padding: 3px 6px; color: #bbc6d3; font-family: var(--font-mono), monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .02em; }
+.run-status[data-status="failed"] { color: #e8ae8a; border-color: #694c3f; }
+.run-status[data-status="completed"] { color: #a6d8bd; border-color: #3d5c4c; }
+.review-workspace :where(button, a, input, textarea, select):focus-visible { outline: 2px solid #a6d8bd; outline-offset: 4px; }
+.review-workspace h1, .review-workspace h2, .review-workspace h3 { text-wrap: balance; }
+.review-workspace a, .review-workspace pre { overflow-wrap: anywhere; }
+.graph-canvas .evidence-node { box-shadow: none; border-color: #38465a; background: #141f2b; }
+.graph-canvas .evidence-node.selected { box-shadow: 0 0 0 2px #a6d8bd66; }
+@media (max-width: 480px) {
+  .workspace-header { gap: 12px; min-height: 68px; }
+  .workspace-brand { font-size: 17px; }
+  .workspace-intro { padding: 28px 0 24px; }
+  .panel-heading, .run-row { padding-left: 20px; padding-right: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-input, .workspace-primary, .run-row { transition: none; }
 }

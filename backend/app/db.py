@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import get_settings
@@ -24,6 +24,9 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 
 def init_db() -> None:
     Base.metadata.create_all(engine)
+    if "target_url" not in {col["name"] for col in inspect(engine).get_columns("projects")}:
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE projects ADD COLUMN target_url TEXT"))
 
 
 def session_scope() -> Session:

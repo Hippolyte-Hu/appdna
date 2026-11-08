@@ -231,6 +231,26 @@ async def understand(
     return selected, answered
 
 
+def blender_objective_capability(store: Store, project: Project) -> Capability:
+    """Keep the cube-and-material check available when the document reading does not finish."""
+    row = Capability(
+        id=new_id("capability"),
+        project_id=project.id,
+        name="Create a mesh cube and assign a material",
+        description="Create one mesh cube and assign one material. The written reading did not finish.",
+        preconditions_json="[]",
+        inputs_json="[]",
+        expected_outputs_json='["A mesh cube exists.", "A material is assigned."]',
+        related_claims_json="[]",
+        verification_status="discovered",
+        confidence=0.4,
+    )
+    store.db.add(row)
+    store.db.commit()
+    store.log(project.id, "understanding", "The document reading did not finish. Blender will still open, and the cube and material check stays available.")
+    return row
+
+
 def _select_target(capabilities: list[Capability], project: Project) -> Capability | None:
     if project.software_name.lower() != "blender":
         return capabilities[0] if capabilities else None

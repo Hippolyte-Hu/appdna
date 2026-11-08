@@ -2,6 +2,8 @@ import json
 import shutil
 from pathlib import Path
 
+from app.engines.outcome import build_outcome, combined_source_relevance
+from app.engines.report import render_report
 from app.models import Project
 from app.store import Store
 from app.util import loads, utcnow
@@ -50,19 +52,51 @@ def export_package(store: Store, project: Project, workdir: Path, destination: P
     for row in experiments:
         if row["verification_status"] == "verified" and row["actions"]:
             shared_script = row["actions"][-1].get("script") or shared_script
+    outcome = build_outcome(
+        software_name=project.software_name,
+        objective=project.learning_objective,
+        capabilities=capabilities,
+        claims=claims,
+        frames=_trace(workdir),
+        source_count=len(store.sources(project.id)),
+        source_relevance=combined_source_relevance(workdir.parent),
+        run_status=project.status,
+        run_error=project.error_message,
+    )
+    scripts = {}
     if verified:
         for item in verified:
             script = shared_script
             match = next((row for row in experiments if row["capability_id"] == item["id"]), None)
             if match and match["actions"]:
                 script = match["actions"][-1].get("script") or script
-            slug = _slug(item["name"])
-            (package / "skills" / f"{slug}.md").write_text(_skill(project, item, script), encoding="utf-8")
-    else:
-        (package / "skills" / "README.md").write_text(
-            "No capability was independently verified, so no skill was published.\n",
+            scripts[item["id"]] = script
+    for skill in outcome["skills"]:
+        (package / "skills" / f"{_slug(skill['name'])}.md").write_text(
+            _skill(project, skill, scripts.get(skill["id"], "")),
             encoding="utf-8",
         )
+    if not outcome["skills"]:
+        (package / "skills" / "README.md").write_text(
+            "No tool skill was learned for this application.\n",
+            encoding="utf-8",
+        )
+    media_folder = workdir.parent / "media"
+    if media_folder.is_dir():
+        shutil.copytree(media_folder, package / "evidence" / "recording", dirs_exist_ok=True)
+    relevance = combined_source_relevance(workdir.parent)
+    relevance_rows = {item.get("id"): item.get("relevant") for item in (relevance or {}).get("sources", [])}
+    report_data = {column.name: getattr(project, column.name) for column in project.__table__.columns}
+    report_data.update({"outcome": outcome, "capabilities": capabilities,
+        "evidence": [{"id": row.id, "origin": row.origin, "kind": row.kind, "summary": row.summary} for row in store.evidence(project.id)],
+        "transcripts": [{"id": row.id, **loads(row.payload_json, {})} for row in store.evidence(project.id) if row.kind == "transcript" and "text" in loads(row.payload_json, {})],
+        "sources": [{"id": row.id, "title": row.title, "url": row.url, "is_relevant": relevance_rows.get(row.id)} for row in store.sources(project.id)]})
+    media_manifest = media_folder / "manifest.json"
+    if media_manifest.is_file():
+        report_data["media"] = loads(media_manifest.read_text(), {})
+    (package / "assessment-report.html").write_text(render_report(report_data))
+    (package / "evaluation.md").write_text(_evaluation_markdown(project, outcome["evaluation"]), encoding="utf-8")
+    (package / "knowledge-graph.json").write_text(json.dumps(outcome["graph"], indent=2), encoding="utf-8")
 
     manifest = {
         "software_name": project.software_name,
@@ -138,27 +172,40 @@ def _slug(name: str) -> str:
     return cleaned or "capability"
 
 
-def _skill(project: Project, capability: dict, script: str) -> str:
-    checks = "\n".join(
-        f"- {item}"
-        for item in (
-            "The named object exists.",
-            "The object type is MESH.",
-            "The named material is assigned to that object.",
-            "The project file can be reopened.",
-        )
-    )
+def _trace(workdir: Path) -> list[dict]:
+    path = workdir.parent / "explore" / "trace.json"
+    if not path.exists():
+        return []
+    payload = loads(path.read_text(encoding="utf-8"), [])
+    return payload if isinstance(payload, list) else []
+
+
+def _skill(project: Project, skill: dict, script: str) -> str:
+    steps = "\n".join(f"{index}. {step}" for index, step in enumerate(skill["steps"], start=1))
+    tools = "\n".join(f"- {item}" for item in skill["tools"]) or "- The application itself."
+    procedure = f"```python\n{script}\n```\n\n" if script else ""
     return (
-        f"# {capability['name']}\n\n"
-        f"{capability['description']}\n\n"
+        f"# {skill['name']}\n\n"
+        f"Status: {skill['status']}\n\n"
+        f"Use when: {skill['use_when']}\n\n"
         f"Software: {project.software_name} {project.software_version or ''}\n\n"
-        "## Preconditions\n\n"
-        + "\n".join(f"- {item}" for item in capability["preconditions"])
-        + "\n\n## Verified procedure\n\n"
-        "This script passed an independent Blender data-API check. "
-        "A screenshot is not the evidence.\n\n"
-        f"```python\n{script}\n```\n\n"
-        "## Independent test\n\n"
-        "Run `tests/verify_scene.py` in a new Blender process against `experiments/scene.blend`.\n\n"
-        f"{checks}\n"
+        "## Tools\n\n"
+        f"{tools}\n\n"
+        "## How to use it\n\n"
+        f"{steps}\n\n"
+        f"{procedure}"
+    )
+
+
+def _evaluation_markdown(project: Project, evaluation: dict) -> str:
+    strengths = "\n".join(f"- {item}" for item in evaluation["strengths"]) or "- None yet."
+    gaps = "\n".join(f"- {item}" for item in evaluation["gaps"]) or "- None recorded."
+    return (
+        f"# {project.software_name} evaluation\n\n"
+        f"Verdict: {evaluation['verdict']}\n\n"
+        f"{evaluation['summary']}\n\n"
+        "## Strengths\n\n"
+        f"{strengths}\n\n"
+        "## Gaps\n\n"
+        f"{gaps}\n"
     )

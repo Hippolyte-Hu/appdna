@@ -7,8 +7,10 @@ from app.config import get_settings
 from app.db import session_scope
 from app.drivers.macos import VisualExploreError
 from app.engines.exploration import explore_and_experiment
-from app.engines.learning import LearningError, understand
+from app.engines.learning import LearningError, blender_objective_capability, understand
 from app.engines.visual import explore_visually
+from app.engines.media import prepare_media
+from app.engines.video_knowledge import ingest_video
 from app.engines.packager import export_package
 from app.engines.research import collect_sources
 from app.engines.verification import verify_scene
@@ -47,22 +49,31 @@ async def run_session(project_id: str) -> None:
             found = await collect_sources(store, project, linkup, root / "sources")
 
             store.set_status(project, "understanding")
-            transcripts = await _transcribe(store, project, gladia)
+            media = _prepare_recording(store, project, root / "media")
+            transcripts = await _transcribe(store, project, gladia, media)
+            if media.get("has_video"):
+                admitted = await ingest_video(store, project, reasoner, media, transcripts, root / "media")
+                found = found or bool(admitted.get("sources"))
             capability = None
             documented = False
             if found:
                 try:
+                    store.log(project.id, "understanding", "Reading the documents. The app opens after this step.")
                     capability, documented = await understand(store, project, reasoner, transcripts, root / "understanding")
-                except LearningError as exc:
-                    if project.software_name.lower() == "blender":
-                        raise
-                    store.log(project.id, "understanding", str(exc))
+                except (LearningError, ProviderError) as exc:
+                    store.log(
+                        project.id,
+                        "understanding",
+                        f"{exc}. Opening {project.software_name} and learning from the live interface.",
+                    )
             else:
                 store.log(
                     project.id,
                     "understanding",
                     f"No public documents for {project.software_name}. The agent will learn from the live interface.",
                 )
+            if project.software_name.lower() == "blender" and capability is None:
+                capability = blender_objective_capability(store, project)
 
             visual_steps: list[dict] = []
             visual_error = ""
@@ -72,7 +83,7 @@ async def run_session(project_id: str) -> None:
                 project,
                 reasoner,
                 root / "explore",
-                _document_brief(store, project),
+                *_document_brief(store, project),
             )
             report = None
             run = None
@@ -145,13 +156,39 @@ async def run_session(project_id: str) -> None:
         _fail(project_id, str(exc))
 
 
-def _document_brief(store: Store, project) -> str:
+async def resume_session(project_id: str) -> None:
+    """Continue GUI learning only: no new research, transcription or bpy experiment."""
+    settings = get_settings()
+    reasoner = HCompanyProvider(settings.hcompany_api_key, settings.hcompany_base_url, settings.hcompany_model)
+    root = settings.artifacts_dir / project_id
+    try:
+        with session_scope() as db:
+            store = Store(db)
+            project = store.project(project_id)
+            if project is None:
+                return
+            store.set_status(project, "exploring", "")
+            documents, source_ids = _document_brief(store, project)
+            await explore_visually(store, project, reasoner, root / "explore",
+                                   documents=documents, source_ids=source_ids, resume=True)
+            store.set_status(project, "packaging")
+            project.package_path = export_package(store, project, root / "run", root / "package")
+            store.set_status(project, "completed", "")
+            store.log(project_id, "completed", "Continuation saved. Prior evidence and independent checks were retained; new GUI skills remain observed, not independently verified.")
+    except Exception as exc:
+        logger.exception("Continuation failed")
+        _fail(project_id, str(exc))
+
+
+def _document_brief(store: Store, project) -> tuple[str, list[str]]:
     parts = []
-    for source in store.sources(project.id)[:6]:
+    source_ids = []
+    for source in store.sources(project.id):
+        source_ids.append(source.id)
         path = Path(source.content_reference or "")
-        body = path.read_text(encoding="utf-8")[:900] if path.exists() else ""
-        parts.append(f"{source.title}\n{source.url}\n{body}")
-    return "\n\n".join(parts)
+        body = path.read_text(encoding="utf-8") if path.is_file() else ""
+        parts.append(f"[{source.id}] {source.title}\n{source.url}\n{body}")
+    return "\n\n".join(parts), source_ids
 
 
 async def _watch_and_click(
@@ -160,21 +197,42 @@ async def _watch_and_click(
     reasoner: HCompanyProvider,
     folder: Path,
     documents: str = "",
+    source_ids: list[str] | None = None,
 ) -> tuple[list[dict], str]:
     try:
-        return await explore_visually(store, project, reasoner, folder, documents=documents), ""
+        return await explore_visually(
+            store, project, reasoner, folder, documents=documents, source_ids=source_ids or []
+        ), ""
     except VisualExploreError as exc:
         store.log(project.id, "exploring", str(exc))
         return [], str(exc)
 
 
-async def _transcribe(store: Store, project, gladia: GladiaProvider) -> list[dict]:
+def _prepare_recording(store, project, folder):
+    if not project.audio_path:
+        return {}
+    try:
+        media = prepare_media(Path(project.audio_path), folder)
+        store.add_evidence(project.id, origin="ffmpeg", kind="media_extraction",
+            summary=f"Separated recording streams and sampled {len(media['frames'])} timestamped frames.",
+            payload=media, artifact_path=str(folder / "manifest.json"))
+        return media
+    except (ValueError, RuntimeError, subprocess.TimeoutExpired) as exc:
+        store.log(project.id, "understanding", f"Recording extraction failed: {exc}")
+        store.add_evidence(project.id, origin="ffmpeg", kind="media_error", summary=str(exc))
+        return {"error": str(exc)}
+
+
+async def _transcribe(store: Store, project, gladia: GladiaProvider, media: dict | None = None) -> list[dict]:
     if not project.audio_path and not project.audio_url:
         store.log(project.id, "understanding", "No audio attachment. Continuing from documents.")
         return []
+    if media and (media.get("error") or not media.get("has_audio")):
+        store.log(project.id, "understanding", "No usable extracted audio; video observations can continue without narration.")
+        return []
     try:
         if project.audio_path:
-            segments = await gladia.transcribe_file(Path(project.audio_path))
+            segments = await gladia.transcribe_file(Path((media or {}).get("audio_path") or project.audio_path))
             origin = project.audio_path
         else:
             segments = await gladia.transcribe_url(project.audio_url)

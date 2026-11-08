@@ -12,3 +12,20 @@ frontend/out/
 frontend/.env.local
 *.blend
 .DS_Store
+
+# Generated overnight tooling caches and isolated demo data (not source).
+/tasks/overnight/presentation-tools/node_modules/
+/tasks/overnight/lo-profile/
+/tasks/overnight/font-cache/
+/deliverables/voicecue-english-demo-build/
+/deliverables/voicecue-demo-workspace/
+/deliverables/voicecue-demo-english-workspace/
+/deliverables/appdna-review-raw/
+
+# Downloaded tutorials, derived media, native helper binaries and private run state.
+/tasks/video-agent/evidence/
+
+# Local review/demo artifacts are not source and may contain private run data.
+/deliverables/
+/tasks/overnight/evidence/
+*.tsbuildinfo

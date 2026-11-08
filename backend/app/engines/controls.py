@@ -39,8 +39,9 @@ def cell_box(cell: int, width: int, height: int) -> tuple[int, int, int, int]:
 def click_point(cell: int, x: int, y: int, width: int, height: int) -> tuple[int, int]:
     """H Company returns x and y on a 0–1000 grid. The cell id is only a hint."""
     del cell
-    if int(x) > 1000 or int(y) > 1000:
-        return min(max(int(x), 0), width - 1), min(max(int(y), 0), height - 1)
+    if not (0 <= int(x) <= 1000 and 0 <= int(y) <= 1000):
+        from app.drivers.macos import UnsafeAction
+        raise UnsafeAction("Control coordinates must be on the 0–1000 normalized grid")
     return norm_to_image(x, y, width, height)
 
 
@@ -50,18 +51,36 @@ def control_key(label: str) -> str:
 
 def control_allowed(label: str) -> bool:
     text = label.strip()
-    if not text:
+    if not text or text.isdecimal():
         return False
     lowered = text.lower()
+    if "window zoom" in lowered or "zoom window" in lowered:
+        return False
+    if lowered in {"zoom", "zoom in", "zoom out"}:
+        return True
     return not any(token in text or token in lowered for token in _SKIP)
 
 
-def next_control(controls: list[dict], visited: set[str]) -> dict | None:
-    for item in controls:
+def should_click(item: dict, *, covered_docs: bool) -> bool:
+    """Click buttons the documents do not explain. Open an options control, but not each choice inside it."""
+    label = str(item.get("label") or "").strip()
+    if not control_allowed(label):
+        return False
+    role = str(item.get("role") or "action")
+    if role == "detail":
+        return False
+    if covered_docs and bool(item.get("documented")):
+        return False
+    return True
+
+
+def next_control(controls: list[dict], visited: set[str], *, covered_docs: bool = False) -> dict | None:
+    # Leave a view only after trying its local controls.
+    for item in sorted(controls, key=lambda item: item.get("role") == "navigation"):
         label = str(item.get("label") or "").strip()
-        if not control_allowed(label):
-            continue
         if control_key(label) in visited:
+            continue
+        if not should_click(item, covered_docs=covered_docs):
             continue
         return item
     return None
