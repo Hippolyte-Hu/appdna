@@ -4,6 +4,8 @@
 
 Built for the **H Company × 42AI Computer Use Agents Hackathon**.
 
+> **Branch:** `feat/appdna-video-learning-agent`. This branch contains the video-learning workbench and the Holo4 learning agent; it is **not a completed end-to-end demo**. Do not run the tutorial GUI/save stage yet — filesystem write confinement is not implemented. See [TEAM-REVIEW.md](tasks/video-agent/TEAM-REVIEW.md) for exact test status and safety blockers.
+
 Motion2Action helps people answer two connected questions: **What can this application actually do? And can an agent learn a demonstrated workflow and perform it?** It combines documentation, recorded demonstrations and hands-on interface exploration in an evidence-backed workspace. A dedicated video-learning agent turns a tutorial into source-linked steps; a separate executor can reuse those steps to operate Blender and check the saved result.
 
 > Previously named **AppDNA**. The repository, Python identifiers, environment variables and some internal labels retain that name for compatibility.
@@ -36,27 +38,27 @@ Solid arrows describe the current video workflow. **Linkup already serves assess
 
 ```mermaid
 flowchart TD
-    IN["Authorized tutorial video + scoped objective"] --> MEDIA["FFmpeg / FFprobe: audio + timestamped initial frames"]
-    MEDIA --> ASR["Gladia: timestamped transcript"]
+    IN["Authorized video + objective"] --> MEDIA["FFmpeg / FFprobe: audio + frames"]
+    MEDIA --> ASR["Gladia: transcript"]
     MEDIA --> LEARN["Source-only learning agent · Holo4-27B"]
     ASR --> LEARN
-    LEARN --> TOOLS["Read transcript intervals / inspect exact frames / crop controls"]
+    LEARN --> TOOLS["Read transcript / inspect frames / crop controls"]
     TOOLS --> LEARN
-    LEARN --> CHECK["Separate model source checks against cited evidence"]
-    CHECK -->|Accepted| KNOW["Saved knowledge + semantic steps + provenance"]
-    CHECK -->|Insufficient support| LEARN
+    LEARN --> CHECK["Model source checks vs. cited evidence"]
+    CHECK -->|Accepted| KNOW["Saved knowledge + steps + provenance"]
+    CHECK -->|Rejected| LEARN
     KNOW --> REVIEW["Learning Showcase · human review"]
-    REVIEW -->|Explicit approval| EXEC["Separate Holo4 GUI executor · fresh screenshots + real input"]
-    EXEC --> SAVE["Dedicated scratch Blender · GUI save"]
-    SAVE --> VERIFY["Read-only bpy artifact inspection + source / target hash binding"]
-    VERIFY --> RECEIPT["Independent check report + execution receipt"]
-    subgraph FUTURE["Proposed extensions · not used in the recorded video workflow"]
-        LINK["Linkup: version-aware documentation retrieval"]
-        DEV["Devin: approved engineering handoff + tests + reviewed PR"]
+    REVIEW -->|Approved| EXEC["Holo4 GUI executor · fresh screenshots + input"]
+    EXEC --> SAVE["Scratch Blender · GUI save"]
+    SAVE --> VERIFY["Read-only bpy inspection + hash binding"]
+    VERIFY --> RECEIPT["Independent check report + receipt"]
+    subgraph FUTURE["Proposed extensions · not used in recorded workflow"]
+        LINK["Linkup: version-aware docs"]
+        DEV["Devin: approved handoff + tests + PR"]
     end
-    LINK -.->|Supplementary cited sources| LEARN
-    EXEC -.->|Sanitized failure report + user approval| DEV
-    DEV -.->|Review changes, then rerun and reverify| EXEC
+    LINK -.->|Supplementary sources| LEARN
+    EXEC -.->|Sanitized failure + approval| DEV
+    DEV -.->|Review, rerun, reverify| EXEC
 ```
 
 **How the video is segmented:** the pipeline extracts audio and an initial frame index, then the learner selects transcript intervals and exact timestamps on demand. It constructs evidence-linked step intervals; it does **not** blindly split fixed-duration clips into actions or replay tutorial coordinates. [Full visual walkthrough, model/tool roles and extension design →](docs/WORKFLOWS.md#8-visual-walkthrough-and-extension-points)
@@ -96,7 +98,7 @@ The assessment distinguishes source-backed knowledge and observed behavior from 
 4. **Run with Agent** creates a fresh execution from that checked knowledge. After explicit scratch-scene approval, H Company chooses actions from current Blender screenshots—not recorded tutorial coordinates.
 5. Blender saves the scene through its GUI. A separate background Blender process reads the saved file and compares it with **source-derived, pre-execution targets**.
 
-**Concrete result:** a retained run reproduced the learned Bevel workflow and passed **11 source-bound artifact checks**. During this documentation review, the saved file was independently reopened and all 11 checks passed again without changing its hash. This is one bounded workflow result, not a claim of general Blender autonomy. [Inspect the evidence and exact scope →](docs/EVALUATION.md)
+> **Concrete result:** a retained run reproduced the learned Bevel workflow and passed **11 source-bound artifact checks**. During documentation review, the saved file was independently reopened and all 11 checks passed again without changing its hash. [Inspect the evidence and exact scope →](docs/EVALUATION.md)
 
 ```mermaid
 flowchart LR
@@ -147,7 +149,7 @@ The desktop execution path is macOS-specific. A frontend that opens on another O
 ```bash
 git clone https://github.com/Hippolyte-Hu/appdna.git
 cd appdna
-git switch main
+git switch feat/appdna-video-learning-agent
 
 uv venv --python 3.11 backend/.venv
 uv pip install --python backend/.venv/bin/python -r backend/requirements.txt
