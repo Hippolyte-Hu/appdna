@@ -362,3 +362,38 @@ def test_recovered_run_cannot_be_revived_by_its_old_executor(database, monkeypat
         assert store.get_run(old['id'])['actions'] == []
 
     asyncio.run(scenario())
+
+
+def test_frozen_skill_selection_excludes_newer_entries(monkeypatch):
+    from app.tasks.runner import applicable_knowledge
+    monkeypatch.setattr(store, 'list_knowledge', lambda version: [
+        {'id': 'newer-unselected'}, {'id': 'original-vip'}, {'id': 'original-base'},
+    ] if version == '4.8.0' else [])
+    run = {'reuse_knowledge': True, 'requested_knowledge_ids': ['original-base', 'original-vip']}
+    assert [k['id'] for k in applicable_knowledge(run, '4.8.0')] == ['original-base', 'original-vip']
+    assert applicable_knowledge({**run, 'reuse_knowledge': False}, '4.8.0') == []
+    with pytest.raises(BrowserBlocked, match='no longer verified'):
+        applicable_knowledge(run, 'different-version')
+
+
+def test_run_creation_preserves_explicit_skill_selection(database):
+    requested = ['base', 'vip']
+    run = store.new_run(make_task()['id'], 150, 1200, True, requested)
+    requested.append('later')
+    assert store.get_run(run['id'])['requested_knowledge_ids'] == ['base', 'vip']
+
+
+@pytest.mark.parametrize('payload', [
+    {'reuse_knowledge': True, 'knowledge_ids': ['missing']},
+    {'reuse_knowledge': False, 'knowledge_ids': ['missing']},
+    {'reuse_knowledge': True, 'knowledge_ids': ['missing', 'missing']},
+    {'reuse_knowledge': True, 'knowledge_ids': []},
+])
+def test_run_api_rejects_invalid_frozen_skills(database, monkeypatch, payload):
+    from app.main import app
+    monkeypatch.setattr('app.main.init_db', lambda: None)
+    task = make_task()
+    with TestClient(app) as client:
+        response = client.post(f"/api/tasks/{task['id']}/runs", json=payload)
+    assert response.status_code == 422
+    assert store.get_task(task['id'])['runs'] == []

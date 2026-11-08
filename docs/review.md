@@ -2,7 +2,7 @@
 
 Branch: **`codex/computer-use-demo`**. Base: `Hippolyte-Hu/appdna` main at `7833271eb48d1d209cb5d291350288d4c130a990`.
 
-Review the [running demo](http://127.0.0.1:3000/tasks), [Connections](http://127.0.0.1:3000/settings), [implementation record](implementation.md) and [current live acceptance evidence](live-demo.md). The [initial source manifest](review-manifest.json) is the historical pre-approval snapshot for commit `73191f2`, not a manifest of subsequent fixes.
+Review the [running demo](http://127.0.0.1:3000/tasks), [Connections](http://127.0.0.1:3000/settings), [implementation record](implementation.md), [first live acceptance](live-demo.md) and [fresh-install transfer/control evidence](transfer-demo.md). The [initial source manifest](review-manifest.json) is the historical pre-approval snapshot for commit `73191f2`, not a manifest of subsequent fixes.
 
 ## Prepared change
 

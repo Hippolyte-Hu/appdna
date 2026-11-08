@@ -43,6 +43,51 @@ Connections shows whether keys and the browser sign-in are saved; these flags do
 5. Add the VIP follow-up. A new session may load version-matched, previously validated knowledge, and must re-observe the interface. Seven checks cover the original four plus VIP refund, delivery and serious complaint. VIP complaints must remain urgent.
 6. For a knowledge-transfer claim, repeat in a genuinely clean environment with the same software version and compare raw reports for cold/reuse sessions. A retry against already-configured rules is not evidence of transfer. No speedup is assumed.
 
+## Fresh-install transfer and cold control
+
+Create two independent Compose projects with new Postgres/Redis/storage volumes and different loopback ports. The helper refuses to overwrite an existing profile. It copies no database, conversations or automation rules.
+
+```sh
+python3 infra/chatwoot/fresh_sandbox.py --name transfer-reuse --port 3004
+python3 infra/chatwoot/fresh_sandbox.py --name transfer-cold --port 3003
+cd infra/chatwoot
+docker compose --env-file local/transfer-reuse/.env run --rm rails bundle exec rails db:chatwoot_prepare
+docker compose --env-file local/transfer-reuse/.env run --rm rails bundle exec rails runner /app/appdna/seed.rb
+docker compose --env-file local/transfer-reuse/.env up -d rails sidekiq
+```
+
+Repeat the three Compose commands with `local/transfer-cold/.env`. The existing default sandbox on port 3001 keeps its original volumes. Profile environment files and generated credentials are under ignored `local/` paths.
+
+Use a different saved browser session for each installation. From `backend`, with its virtual environment active:
+
+```sh
+python scripts/run_transfer.py login --profile ../infra/chatwoot/local/transfer-reuse
+python scripts/run_transfer.py login --profile ../infra/chatwoot/local/transfer-cold
+```
+
+Complete each normal synthetic administrator login and press Enter when its dashboard is visible. This helper saves only that installation's browser state. It does not alter the shared backend `.env`, use the verifier token to log in, or configure business rules.
+
+Run the reuse trial with explicit IDs from previously verified skills, then the matched cold trial:
+
+```sh
+python scripts/run_transfer.py run --profile ../infra/chatwoot/local/transfer-reuse --knowledge-ids knowledge_BASE knowledge_VIP
+python scripts/run_transfer.py run --profile ../infra/chatwoot/local/transfer-cold --no-reuse
+```
+
+The harness calls the production `execute_run`, with the same goal, model, seven fixed assertions and default 150-action/1200-second budget for both trials. It requires zero rules for a new trial, records the frozen source skill IDs, uses an independent model/browser session and respects the shared single-run lock. Its tasks, activity, screenshots, results and controls appear in the ordinary AppDNA UI. No successful navigation path is provided. Source skills must already be verified for the matching Chatwoot version.
+
+If a trial fails, preserve it. An explicit `--retry-task task_ID` repeats that task against its real partial configuration with outcome feedback; it does not reset the installation. Report all attempts when comparing time/actions. A passing repair is not a second clean start.
+
+The API also accepts optional `knowledge_ids` alongside `reuse_knowledge: true` when starting a run. Omit them for the usual latest compatible skills. Unknown, duplicate or incompatible selections are rejected. This lets an experiment freeze its source set even if another task saves newer skills.
+
+To make a completed installation the UI's current connection, wait for active runs to finish and run:
+
+```sh
+python scripts/import_chatwoot_connection.py --connection ../infra/chatwoot/local/transfer-reuse/connection.json --url http://127.0.0.1:3004 --session-path data/sessions/transfer-reuse.json
+```
+
+Refresh Connections to reload the address and token. The import preserves model keys, uses atomic private-file writes, refuses target changes during an active run and requires a separate session path when changing origins. Each recorded workspace's Open Chatwoot link uses its own captured environment, even after the current connection changes.
+
 ## Known limits
 
 - The live model/browser/Chatwoot path requires an actual sandbox, valid browser session, model key and API token. Contract tests do not substitute for live integration evidence.

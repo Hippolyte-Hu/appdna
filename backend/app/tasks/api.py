@@ -34,6 +34,14 @@ class RunCreate(BaseModel):
     max_actions: int = Field(default=80, ge=5, le=150)
     timeout_seconds: int = Field(default=600, ge=60, le=1200)
     reuse_knowledge: bool = True
+    knowledge_ids: list[str] | None = Field(default=None, min_length=1, max_length=3)
+
+    @field_validator("knowledge_ids")
+    @classmethod
+    def unique_knowledge(cls, value):
+        if value is not None and len(set(value)) != len(value):
+            raise ValueError("Choose each saved skill only once")
+        return value
 
 
 class RunControl(BaseModel):
@@ -63,8 +71,15 @@ def get_task(task_id: str):
 
 @router.post("/tasks/{task_id}/runs", status_code=201)
 def start_run(task_id: str, body: RunCreate, background: BackgroundTasks):
+    if body.knowledge_ids is not None:
+        task = store.get_task(task_id)
+        if not task:
+            raise HTTPException(404, "Task not found")
+        allowed = {item["id"] for item in store.list_knowledge(task["software_version"])}
+        if not body.reuse_knowledge or not set(body.knowledge_ids).issubset(allowed):
+            raise HTTPException(422, "Choose currently verified skills for this software version and enable reuse.")
     try:
-        run = store.new_run(task_id, body.max_actions, body.timeout_seconds, body.reuse_knowledge)
+        run = store.new_run(task_id, body.max_actions, body.timeout_seconds, body.reuse_knowledge, body.knowledge_ids)
     except LookupError as exc:
         raise HTTPException(404, str(exc)) from exc
     except ValueError as exc:

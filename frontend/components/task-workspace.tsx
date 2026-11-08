@@ -631,6 +631,9 @@ function SoftwareView({ run }: { run: Run | null }) {
       ? run?.observation
       : snapshots.find((item) => item.image === selected);
   const missingModel = connections && !connections.model.api_key_saved;
+  const appUrl = run?.environment?.url
+    ? `${run.environment.url.replace(/\/$/, "")}/app/accounts/${run.environment.account_id}`
+    : connections?.chatwoot.url;
   const missingApp =
     connections &&
     (!connections.chatwoot.session_saved ||
@@ -650,10 +653,10 @@ function SoftwareView({ run }: { run: Run | null }) {
           Chatwoot
         </CardTitle>
         <CardAction>
-          {connections?.chatwoot.url ? (
+          {appUrl ? (
             <Button variant="ghost" size="icon-sm" asChild>
               <a
-                href={connections.chatwoot.url}
+                href={appUrl}
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Open Chatwoot"

@@ -66,6 +66,13 @@ export type Run = {
   sources: Source[];
   verifications: Verification[];
   knowledge_refs: string[];
+  requested_knowledge_ids?: string[] | null;
+  environment?: Pick<Environment, "url" | "account_id" | "inbox_id"> & {
+    software?: string;
+    version?: string;
+    model?: string;
+    agent_protocol?: string;
+  };
   saved_knowledge_id?: string;
   observation?: Observation;
   activities: {

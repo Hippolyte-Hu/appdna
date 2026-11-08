@@ -1,5 +1,7 @@
 # Live Chatwoot acceptance — 2026-11-08
 
+This is the first, same-account acceptance record. A later [fresh-install transfer and no-skill control](transfer-demo.md) now records the previously unmeasured migration step. The original run evidence below is preserved.
+
 The complete routing → verification → saved skill → VIP follow-up → reuse → verification flow ran against the local Chatwoot CE 4.8.0 sandbox. Configuration was performed by H Company through the observed browser UI. The independent verifier only created synthetic inputs and read resulting conversations.
 
 ## Recorded passing runs

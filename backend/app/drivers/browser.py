@@ -32,12 +32,15 @@ def safe_ui_url(url: str, base_url: str, account_id: int) -> str:
 
 
 class BrowserDriver:
-    def __init__(self, base_url: str, account_id: int, storage_state: Path, folder: Path, headless: bool = True):
+    def __init__(self, base_url: str, account_id: int, storage_state: Path, folder: Path, headless: bool = True,
+                 *, start_url: str | None = None, protect_conversations: bool = False):
         self.base_url = base_url.rstrip("/")
         self.account_id = account_id
         self.storage_state = storage_state
         self.folder = folder
         self.headless = headless
+        self.start_url = start_url or f"{self.base_url}/app/accounts/{account_id}/dashboard"
+        self.protect_conversations = protect_conversations
         self.page = None
         self.context = None
         self.browser = None
@@ -63,7 +66,8 @@ class BrowserDriver:
             await self.context.route("**/*", scope)
             self.page = await self.context.new_page()
             self.page.set_default_timeout(8000)
-            await self.page.goto(f"{self.base_url}/app/accounts/{self.account_id}/dashboard", wait_until="domcontentloaded")
+            self.validate_observation_url(self.start_url)
+            await self.page.goto(self.start_url, wait_until="domcontentloaded")
             return self
         except Exception:
             await self.__aexit__(None, None, None)
@@ -77,8 +81,15 @@ class BrowserDriver:
         if self.runtime:
             await self.runtime.stop()
 
+    def validate_observation_url(self, url: str):
+        safe_ui_url(url, self.base_url, self.account_id)
+        settings_path = f"/app/accounts/{self.account_id}/settings"
+        path = urlsplit(url).path
+        if self.protect_conversations and not (path == settings_path or path.startswith(settings_path + "/")):
+            raise BrowserBlocked("Verification inputs are protected. Resume from an actually observed account settings page.")
+
     async def observe(self, step: int) -> dict:
-        safe_ui_url(self.page.url, self.base_url, self.account_id)
+        self.validate_observation_url(self.page.url)
         if await self.page.locator('input[type="password"]').count():
             raise BrowserBlocked("The browser session needs a fresh administrator login. Run the login helper.")
         controls = await self.page.evaluate("""() => {

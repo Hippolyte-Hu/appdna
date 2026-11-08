@@ -3,9 +3,10 @@ import json
 import logging
 import time
 from contextlib import suppress
+from urllib.parse import urlsplit
 
 from app.config import get_settings
-from app.drivers.browser import BrowserBlocked, BrowserDriver
+from app.drivers.browser import BrowserBlocked, BrowserDriver, safe_ui_url
 from app.providers.browser_agent import BrowserAgent
 from app.providers.hcompany import HCompanyProvider
 from app.providers.base import ProviderError, ProviderTimeout
@@ -51,6 +52,44 @@ def prior_outcomes(task: dict, run_id: str) -> list[dict]:
             return [{key: result.get(key) for key in ("id", "requirement", "expected", "actual", "status")}
                     for result in previous["verifications"]]
     return []
+
+
+def applicable_knowledge(run: dict, version: str) -> list[dict]:
+    if not run["reuse_knowledge"]:
+        return []
+    entries = store.list_knowledge(version)
+    selected = run.get("requested_knowledge_ids")
+    if selected is None:
+        return entries[:3]
+    by_id = {item["id"]: item for item in entries}
+    if not set(selected).issubset(by_id):
+        raise BrowserBlocked("A selected skill is no longer verified for this software version. Choose skills again.")
+    return [by_id[item] for item in selected]
+
+
+def observed_settings_entry(task: dict, base_url: str, account_id: int) -> tuple[str | None, bool]:
+    """Resume an observed landmark; do not expose prior withheld inbox messages."""
+    candidates = [task]
+    if task.get("parent_id"):
+        parent = store.get_task(task["parent_id"])
+        if parent:
+            candidates.append(parent)
+    protected = False
+    prefix = f"/app/accounts/{account_id}/settings"
+    for candidate in candidates:
+        for previous in candidate.get("runs", []):
+            if not previous.get("verifications"):
+                continue
+            url = previous.get("observation", {}).get("url", "")
+            try:
+                safe_ui_url(url, base_url, account_id)
+            except BrowserBlocked:
+                continue
+            protected = True
+            path = urlsplit(url).path
+            if path == prefix or path.startswith(prefix + "/"):
+                return url, True
+    return None, protected
 
 
 def agent_context(task: dict, run: dict, observation: dict, knowledge: list[dict], research_remaining: int = 3) -> str:
@@ -176,14 +215,18 @@ async def execute_run(run_id: str) -> None:
             store.log(run_id, "research", f"Retrieved {source['title']}", "source", url=source["url"])
         for error in errors:
             store.log(run_id, "research", error, "error")
-        knowledge = store.list_knowledge(task["software_version"])[:3] if run["reuse_knowledge"] else []
+        knowledge = applicable_knowledge(run, task["software_version"])
         store.update_run(run_id, knowledge_refs=[item["id"] for item in knowledge])
         if knowledge:
             store.log(run_id, "research", f"Loaded {len(knowledge)} previously verified procedures for this software version; the current UI must be revalidated.", "knowledge")
         set_stage(run_id, "explore", "exploring")
         folder = settings.artifacts_dir / run_id / "browser"
+        entry_url, protect_inputs = observed_settings_entry(task, settings.chatwoot_base_url, settings.chatwoot_account_id)
+        store.update_run(run_id, browser_entry={"observed_resume_url": entry_url,
+                                               "protect_verification_inputs": protect_inputs})
         async with BrowserDriver(settings.chatwoot_base_url, settings.chatwoot_account_id,
-                                 settings.browser_state_path, folder, settings.browser_headless) as driver:
+                                 settings.browser_state_path, folder, settings.browser_headless,
+                                 start_url=entry_url, protect_conversations=protect_inputs) as driver:
             agent = BrowserAgent(provider)
             research_attempts = 0
             completed = False

@@ -68,7 +68,8 @@ def get_task(task_id: str) -> dict | None:
         return {**task_dict(task), "runs": runs, "latest_run": runs[0] if runs else None}
 
 
-def new_run(task_id: str, max_actions: int, timeout_seconds: int, reuse_knowledge: bool) -> dict:
+def new_run(task_id: str, max_actions: int, timeout_seconds: int, reuse_knowledge: bool,
+            knowledge_ids: list[str] | None = None) -> dict:
     with session_scope() as db:
         # Serialize competing start requests across threads/processes sharing the SQLite database.
         db.execute(text("BEGIN IMMEDIATE"))
@@ -80,7 +81,8 @@ def new_run(task_id: str, max_actions: int, timeout_seconds: int, reuse_knowledg
             raise ValueError("Another run owns the test environment. Stop it before starting a new run.")
         now = timestamp()
         state = {"activities": [], "actions": [], "sources": [], "verifications": [],
-                 "knowledge_refs": [], "stages": {stage: "pending" for stage in STAGES},
+                 "knowledge_refs": [], "requested_knowledge_ids": knowledge_ids,
+                 "stages": {stage: "pending" for stage in STAGES},
                  "summary": "Waiting for environment checks.", "blockers": [], "plan": []}
         row = TaskRun(id=new_id("run"), task_id=task_id, status="created", stage="understand",
                       control="run", max_actions=max_actions, timeout_seconds=timeout_seconds,

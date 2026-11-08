@@ -56,11 +56,11 @@ Base routing subsequently passed **4/4** independent checks in **`run_9fafa2b754
 - [x] Live Chatwoot API preflight.
 - [x] M0 model-driven live UI action.
 - [x] M1–M2 actual routing creation, independent positive/negative checks and observed failed configurations.
-- [ ] M3 cold/reuse comparison in a clean environment.
+- [x] M3 separate fresh installations, frozen-source reuse and a recorded no-skill control; reuse passed after correction, control remained failed in three observed attempts.
 - [x] M4 VIP follow-up, skill reuse and seven independent checks, including complaint precedence.
 - [x] M5 complete browser-driven demo, actual screenshots, evidence inspection and report export.
 
-The interface and live base run are reviewable. Clean-environment transfer and a cold/reuse performance comparison remain unmeasured. The original Blender integration test also requires Blender on PATH, absent on this machine.
+The [fresh-install transfer record](transfer-demo.md) now covers M3: independent empty databases, explicit source skill IDs, all attempts, safe retry entry points and complete successful transfer verification. The new API can freeze a source skill set; the profile harness uses the production orchestrator without changing shared live connections. Workspace links use the recorded environment. Current checks passed **86 backend tests**, frontend type checking and the production build. The single observed comparison does not establish a general performance gain; the cold arm never reached a complete pass. The original Blender integration still requires a Blender executable on PATH.
 
 ## Primary references
 

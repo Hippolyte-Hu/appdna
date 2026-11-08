@@ -1,8 +1,8 @@
-name: appdna-chatwoot
+name: ${APPDNA_COMPOSE_PROJECT:-appdna-chatwoot}
 
 x-chatwoot: &chatwoot
   image: chatwoot/chatwoot:v4.8.0-ce
-  env_file: .env
+  env_file: ${APPDNA_ENV_FILE:-.env}
   environment:
     RAILS_ENV: production
     NODE_ENV: production
@@ -10,7 +10,7 @@ x-chatwoot: &chatwoot
   volumes:
     - storage:/app/storage
     - ./seed.rb:/app/appdna/seed.rb:ro
-    - ./local:/app/appdna-output
+    - ${APPDNA_OUTPUT_DIR:-./local}:/app/appdna-output
   depends_on:
     postgres:
       condition: service_healthy
@@ -21,7 +21,7 @@ services:
   rails:
     <<: *chatwoot
     ports:
-      - "127.0.0.1:3001:3000"
+      - "127.0.0.1:${APPDNA_CHATWOOT_PORT:-3001}:3000"
     entrypoint: docker/entrypoints/rails.sh
     command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
   sidekiq:

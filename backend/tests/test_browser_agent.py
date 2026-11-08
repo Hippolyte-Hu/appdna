@@ -110,3 +110,34 @@ def test_stale_target_recovers_without_attempting_an_unobserved_control(tmp_path
     driver.page = Page()
     with pytest.raises(ValueError, match='current observation'):
         asyncio.run(driver.execute({'kind':'click','target':999,'text':''}))
+
+
+def test_retry_entry_uses_only_a_same_account_previously_observed_setting():
+    from app.tasks.runner import observed_settings_entry
+    task = {'runs': [{'id': 'failed', 'verifications': [{'status': 'failed'}],
+                      'observation': {'url': 'http://127.0.0.1:3004/app/accounts/1/settings/automation/list'}}]}
+    url, protected = observed_settings_entry(task, 'http://127.0.0.1:3004', 1)
+    assert protected and url.endswith('/settings/automation/list')
+    assert observed_settings_entry(task, 'http://127.0.0.1:3003', 1) == (None, False)
+    assert observed_settings_entry(task, 'http://127.0.0.1:3004', 2) == (None, False)
+    assert observed_settings_entry({'runs': []}, 'http://127.0.0.1:3004', 1) == (None, False)
+
+
+def test_retry_never_captures_a_dashboard_or_conversation_with_heldout_inputs(tmp_path):
+    import pytest
+    from app.drivers.browser import BrowserBlocked, BrowserDriver
+    driver = BrowserDriver('http://127.0.0.1:3004', 1, tmp_path/'state.json', tmp_path,
+                           protect_conversations=True)
+    driver.validate_observation_url('http://127.0.0.1:3004/app/accounts/1/settings/automation/list')
+    for suffix in ['dashboard', 'conversations/1', 'inbox/1']:
+        with pytest.raises(BrowserBlocked, match='Verification inputs are protected'):
+            driver.validate_observation_url('http://127.0.0.1:3004/app/accounts/1/' + suffix)
+
+
+def test_followup_resumes_parent_landmark_without_supplying_a_new_path(monkeypatch):
+    from app.tasks import persistence as store
+    from app.tasks.runner import observed_settings_entry
+    url = 'http://127.0.0.1:3004/app/accounts/1/settings/automation/list'
+    parent = {'runs': [{'verifications': [{'status': 'passed'}], 'observation': {'url': url}}]}
+    monkeypatch.setattr(store, 'get_task', lambda task_id: parent if task_id == 'parent' else None)
+    assert observed_settings_entry({'runs': [], 'parent_id': 'parent'}, 'http://127.0.0.1:3004', 1) == (url, True)
