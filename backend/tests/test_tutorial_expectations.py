@@ -72,6 +72,20 @@ def test_intermediate_frame_cannot_bind_final_state(tmp_path,monkeypatch):
     with pytest.raises(ValueError,match='citation'):asyncio.run(module.build_expectations(tmp_path,vision))
 
 
+def test_wrong_target_citation_regenerates_once_against_same_final_image(tmp_path,monkeypatch):
+    source(tmp_path);vision=fake_provider(monkeypatch)
+    requests=[]
+    async def request(provider,prompt,images,schema,*args,**kwargs):
+        requests.append((prompt,images,schema))
+        return dict(values=values(),evidence_ids=['earlier'] if len(requests)==1 else ['f1'])
+    monkeypatch.setattr(module,'source_request',request)
+    target=asyncio.run(module.build_expectations(tmp_path,vision))
+    assert len(requests)==2 and requests[0][1]==requests[1][1]
+    assert requests[0][2]['properties']['evidence_ids']['items']['enum']==['f1']
+    assert target['evidence_ids']==['f1']
+    assert list(tmp_path.glob('artifact-target-proposal-*.json'))
+
+
 def test_changed_source_or_values_invalidate_binding(tmp_path,monkeypatch):
     source(tmp_path);vision=fake_provider(monkeypatch)
     target=asyncio.run(module.build_expectations(tmp_path,vision))

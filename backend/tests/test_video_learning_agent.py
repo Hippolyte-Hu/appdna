@@ -84,6 +84,20 @@ def test_budget_exhaustion_stops_without_silent_success(tmp_path,monkeypatch):
     assert not (tmp_path/'plan.json').exists()
 
 
+def test_stop_during_final_source_check_never_accepts_plan(tmp_path,monkeypatch):
+    source,media,_=setup(tmp_path,monkeypatch)
+    stopped=False
+    class StopModel(Model):
+        async def check_video_step(self,**kwargs):
+            nonlocal stopped
+            stopped=True
+            return {'supported':True,'issues':[]}
+    model=StopModel([read(),inspect(),submit(proposal())])
+    result=asyncio.run(module.VideoLearningAgent(model).run(media,tmp_path,[],source=source,
+        objective='Unit stop fixture',should_stop=lambda:stopped))
+    assert result['status']=='stopped' and not (tmp_path/'plan.json').exists()
+
+
 def test_instance_context_is_not_shared_across_sources(tmp_path,monkeypatch):
     source,media,_=setup(tmp_path,monkeypatch)
     model=Model([{'action':'needs_input','reason':'Source is unclear'}]*2)

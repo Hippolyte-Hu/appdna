@@ -410,6 +410,11 @@ class HCompanyProvider:
             "The image is a fresh screenshot. Coordinates are 0–1000 normalized to this image. "
             "First dismiss a non-security Blender startup splash or ordinary application error if it blocks the UI. "
             "Use Escape or its visible OK button, never a permission dialog. Inspect history to avoid repeating ineffective clicks. "
+            "The first-run Quick Setup dialog and the ordinary Blender splash are DIFFERENT screens. "
+            "Click Continue only while that button is actually visible in Quick Setup. "
+            "When the splash lists General, 2D Animation, Open or recent files, dismiss it with key escape. There is no Continue button on that splash. "
+            "History describes PREVIOUS screens. Never repeat a historical click target that is absent now. "
+            "If the previous capture_changed=false, re-ground a different action or return blocked; do not repeat the ineffective action. "
             "If a demonstrated shading command has been renamed in this Blender version, use a visible semantically equivalent smoothing command and explain the adaptation. "
             "Before choosing ANY input, compare this screenshot to the step.expected condition. If it is already met, return done immediately. "
             "For 'Modifier Properties tab is active', the visible Add Modifier button and wrench tab suffice: do NOT click the wrench again. "
@@ -429,7 +434,8 @@ class HCompanyProvider:
                        "Use set_text with a freshly grounded x,y and the exact directory with trailing slash or filename. This atomically focuses, selects all, pastes/replaces, and presses Return. Do not use type for these save fields. "
                        "Click the path field at the TOP of Blender file browser, enter the directory, Return; set filename at the BOTTOM; click Save As. "
                        "Never browse/open other files or overwrite an unrelated file. You MUST first open Save As and save: the initial unsaved scene is NOT done. done only after the file dialog closes and titlebar shows replica.blend, not Untitled.")
-        return await self._look(prompt, [image_bytes], schema, "tutorial_action", max_tokens=850)
+        return await self._look(prompt, [image_bytes], schema, "tutorial_action", max_tokens=850,
+                                timeout=90)
 
     async def describe_click(self, *, software: str, label: str, before: bytes, after: bytes) -> str:
         instructions = (

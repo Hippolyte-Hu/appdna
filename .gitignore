@@ -8,6 +8,7 @@ __pycache__/
 .mypy_cache/
 frontend/node_modules/
 frontend/.next/
+frontend/.next-dev/
 frontend/out/
 frontend/.env.local
 *.blend
@@ -29,3 +30,5 @@ frontend/.env.local
 /deliverables/
 /tasks/overnight/evidence/
 *.tsbuildinfo
+.playwright-cli/
+output/playwright/

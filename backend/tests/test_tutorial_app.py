@@ -86,6 +86,8 @@ def test_parent_invokes_learning_agent_and_preserves_needs_input(tmp_path,monkey
     (p/'source.mp4').write_bytes(b'unit video fixture')
     monkeypatch.setattr(module,'prepare_media',lambda *a:{'duration':10})
     monkeypatch.setattr(module,'providers',lambda:(object(),object()))
+    from types import SimpleNamespace
+    monkeypatch.setattr(module,'get_settings',lambda:SimpleNamespace(gladia_api_key='unit-fixture',hcompany_api_key='unit-fixture'))
     async def fake_agent(media,folder,asr,vision,**kwargs):
         assert kwargs['source']==p/'source.mp4' and kwargs['objective']=='Follow this source'
         return {'status':'needs_input','reason':'Unit fixture ambiguous branch'}
@@ -131,6 +133,9 @@ def test_learning_model_override_does_not_change_desktop_action_model(monkeypatc
     _,vision=module.providers()
     assert vision.model=='holo4-35b-a3b'
     assert module.os.environ['APPDNA_ACTION_MODEL']=='holo4-27b'
+    assert module.action_provider().model=='holo4-27b'
+    monkeypatch.delenv('APPDNA_ACTION_MODEL')
+    assert module.action_provider().model=='holo4-27b'
 
 
 @pytest.mark.parametrize('binding_matches',[False,True])

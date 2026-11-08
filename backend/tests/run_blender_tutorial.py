@@ -15,12 +15,9 @@ async def main():
     folder=args.job/'run'
     if folder.exists():raise RuntimeError('Refusing to overwrite execution evidence')
     if args.resume_from:
-        from types import SimpleNamespace
-        from app.drivers.blender_tutorial import guard
         pid=json.loads((args.resume_from/'run/pid.json').read_text())['pid']
-        guard('probe',pid)
+        driver=BlenderTutorialDriver.resume(pid,args.resume_from/'run')
         folder.mkdir(parents=True)
-        driver=BlenderTutorialDriver(SimpleNamespace(pid=pid))
         (folder/'resumed_from.json').write_text(json.dumps({'run':str(args.resume_from.resolve()),'pid':pid}))
     else:
         driver=await asyncio.to_thread(BlenderTutorialDriver.launch,folder)

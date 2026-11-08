@@ -1,10 +1,13 @@
 """Bounded screenshot → H Company action → input loop, with durable receipts."""
 import asyncio
 import json
+import hashlib
 import re
 from pathlib import Path
 from urllib.parse import urlparse,parse_qs
 from app.engines.tutorial import validate_action
+from app.agents.video_learning import write_json
+from app.providers.base import ProviderError
 
 
 def youtube_url(value: str) -> str:
@@ -20,20 +23,42 @@ def youtube_url(value: str) -> str:
     return 'https://www.youtube.com/watch?v='+video
 
 
-async def execute_plan(plan: dict, folder: Path, driver, vision, stopped, *, max_actions=12, save_target: Path | None=None) -> dict:
+def resumable_failure(exc):
+    return (isinstance(exc,ProviderError) and (exc.status is None or exc.status==429 or exc.status>=500)
+            or isinstance(exc,RuntimeError) and any(text in str(exc).lower() for text in ('not foreground','locked','permission is missing')))
+
+
+async def execute_plan(plan: dict, folder: Path, driver, vision, stopped, *, max_actions=12, save_target: Path | None=None, resume=False) -> dict:
     folder.mkdir(parents=True,exist_ok=True)
-    events=[]
-    result={'status':'running','verification':'not_independently_verified','events':events}
+    receipt=folder/'run.json'
+    plan_hash=hashlib.sha256(json.dumps(plan,sort_keys=True,allow_nan=False).encode()).hexdigest()
+    if receipt.exists():
+        if not resume:raise ValueError('Existing execution evidence requires an explicit resume')
+        result=json.loads(receipt.read_text())
+        ids=[step['id'] for step in plan['steps']]
+        complete=result.get('completed_steps',[])
+        if result.get('plan_sha256')!=plan_hash or complete!=ids[:len(complete)]:
+            raise ValueError('Cannot resume a changed execution plan or invalid checkpoint')
+        if result['status'] not in {'paused','observed_complete'}:raise ValueError('Execution is not resumable')
+    else:
+        result={'verification':'not_independently_verified','events':[], 'plan_sha256':plan_hash,
+                'completed_steps':[],'captures':0,'action_attempts':{}}
+    result['status']='running';result.pop('reason',None)
+    events=result['events']
     def persist():
-        (folder/'run.json').write_text(json.dumps(result,indent=2))
+        write_json(folder/'run.json',result)
     persist()
     try:
         for step in plan['steps']:
+            if step['id'] in result['completed_steps']:continue
             result['current_step']=step['id']
-            for _ in range(max_actions):
+            remaining=max_actions-result['action_attempts'].get(step['id'],0)
+            for _ in range(remaining):
                 if stopped():result['status']='stopped';return result
-                before=folder/f'before-{len(events):03d}.png'
+                capture=result['captures'];result['captures']+=1;persist()
+                before=folder/f'before-{capture:03d}.png'
                 await asyncio.to_thread(driver.capture,before)
+                result['action_attempts'][step['id']]=result['action_attempts'].get(step['id'],0)+1;persist()
                 action=await vision.tutorial_action(step=step,image_bytes=before.read_bytes(),history=events)
                 if stopped():result['status']='stopped';return result
                 action=validate_action(action,save_target=save_target)
@@ -48,21 +73,22 @@ async def execute_plan(plan: dict, folder: Path, driver, vision, stopped, *, max
                 if action['action']=='blocked':
                     events.append(event);result.update(status='blocked',reason=action.get('reason','Model blocked'));return result
                 if action['action']=='done':
-                    events.append(event);persist();break
+                    events.append(event);result['completed_steps'].append(step['id']);persist();break
                 if save_target is None:
                     await asyncio.to_thread(driver.perform,action)
                 else:
                     await asyncio.to_thread(driver.perform,action,save_target=save_target)
                 await asyncio.sleep(.6)
-                after=folder/f'after-{len(events):03d}.png'
+                after=folder/f'after-{capture:03d}.png'
                 await asyncio.to_thread(driver.capture,after)
                 event['after']=after.name
+                event['capture_changed']=before.read_bytes()!=after.read_bytes()
                 events.append(event);persist()
             else:
                 result.update(status='blocked',reason='Action budget exhausted; step not confirmed');return result
         result['status']='observed_complete'
         return result
     except Exception as exc:
-        result.update(status='blocked',reason=str(exc)[:500])
+        result.update(status='stopped' if stopped() else 'paused' if resumable_failure(exc) else 'blocked',reason=str(exc)[:500])
         return result
     finally:persist()

@@ -1,6 +1,6 @@
 import type { ProjectDetail, ProjectSummary } from "./types";
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8787";
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
 export async function createProject(input: {
   software_name: string;
@@ -91,5 +91,6 @@ async function errorText(response: Response): Promise<string> {
 export function sourceUrl(url: string): string {
   if (/^https?:\/\//i.test(url)) return url;
   if (/^\/api\/projects\/[A-Za-z0-9_-]+\/media\/original$/.test(url)) return `${API_BASE}${url}`;
+  if (/^\/video\/assets\/[a-f0-9]{32}\/source\.(mp4|mov|webm|mkv)$/.test(url)) return `${API_BASE}${url}`;
   return "#";
 }

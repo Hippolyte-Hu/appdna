@@ -1,0 +1,136 @@
+{
+  "date_utc": "2026-11-08",
+  "branch": "codex/video-learning-fixes",
+  "base_commit": "4aa58ed",
+  "regression": {
+    "backend_passed": 220,
+    "backend_failed": 0,
+    "dependency_deprecation_warnings": 1,
+    "typecheck": "passed",
+    "production_build": "passed"
+  },
+  "learning": {
+    "id": "a6f51c86c0224cebb84118204d1debf6",
+    "source_url": "https://www.youtube.com/watch?v=l12k19-imCY",
+    "ingestion": "real browser upload of repository example video",
+    "transcript_provider": "Gladia",
+    "transcript_segments": 41,
+    "model": "holo4-27b",
+    "decisions": 7,
+    "inspected_frames": 10,
+    "accepted_steps": 5,
+    "status": "source_checked",
+    "source_sha256": "f6f97d1deda194ad61b4434aea6952ab2fea26fd289d5a5da0e6e2ee9be182cf",
+    "manual_plan_or_parameter_edits": false
+  },
+  "execution": {
+    "id": "be93121b8cd74b04ae4e68ec6aab64f9",
+    "input_reuse": "checked knowledge and original source media only; new process and scene",
+    "action_model": "holo4-27b",
+    "workflow_status": "observed_complete",
+    "workflow_decisions": 15,
+    "save_status": "observed_complete",
+    "save_decisions": 5,
+    "verification": "verified",
+    "scope": "blender_bevel_v1",
+    "expected": {
+      "shape": "cube",
+      "affect": "EDGES",
+      "width_type": "OFFSET",
+      "limit_method": "ANGLE",
+      "width": 0.24,
+      "segments": 4,
+      "angle_limit_degrees": 30,
+      "smooth_shading": true,
+      "smooth_by_angle": true
+    },
+    "measured": {
+      "width": 0.23999999463558197,
+      "segments": 4,
+      "affect": "EDGES",
+      "width_type": "OFFSET",
+      "limit_method": "ANGLE",
+      "angle_limit_degrees": 30.000000834826057,
+      "shape": "cube",
+      "smooth_shading": true,
+      "smooth_by_angle": true
+    },
+    "checks": {
+      "shape": true,
+      "affect": true,
+      "width_type": true,
+      "limit_method": true,
+      "width": true,
+      "segments": true,
+      "angle_limit_degrees": true,
+      "smooth_shading": true,
+      "smooth_by_angle": true,
+      "one_visible_bevel": true,
+      "evaluated_geometry_rounded": true
+    },
+    "sha256": "93b53945e12003859aa91966592d5a0c37ce19cad9418835f99f856c843b3a65",
+    "artifact_bytes": 102892,
+    "target_binding_sha256": "f4e192215e9b5fd6f4a009bf79784c2413d523b03ed8897d0649cd36b0f3bbd0",
+    "read_only_hash_unchanged": true,
+    "blender_version": "5.1.2"
+  },
+  "browser": {
+    "job_id": "be93121b8cd74b04ae4e68ec6aab64f9",
+    "knowledge_status": "source_checked",
+    "actions_displayed": 7,
+    "page_errors": [],
+    "mobile_overflow": false,
+    "independent_artifact_verification": "verified",
+    "artifact_download": true,
+    "project": {
+      "id": "video_be93121b8cd74b04ae4e68ec6aab64f9",
+      "capabilities": 5,
+      "matched_sources": 1,
+      "package_download": true,
+      "mobile_overflow": false
+    }
+  },
+  "attempts": [
+    {
+      "id": "a6f51c86c0224cebb84118204d1debf6",
+      "status": "blocked",
+      "reason": "Scratch Blender did not become foreground; no input sent"
+    },
+    {
+      "id": "221c498242b2474da155d69315f0ae38",
+      "status": "blocked",
+      "reason": "Accessibility permission is missing"
+    },
+    {
+      "id": "0dd14aba119142e785773e41f8abf9ef",
+      "status": "blocked",
+      "reason": "Repeated identical action; inspect the current screen before retrying"
+    },
+    {
+      "id": "fe53cb317b7a4b588e49dfef7c21613b",
+      "status": "blocked",
+      "reason": "Blender target is not foreground; no input sent"
+    },
+    {
+      "id": "8de9ce9a3dbf4204ae352f1d50916e81",
+      "status": "artifact_failed",
+      "reason": "H Company took too long to answer"
+    },
+    {
+      "id": "a7adace468b648cf8d80cf0b7bef4a04",
+      "status": "blocked",
+      "reason": "H Company took too long to answer"
+    },
+    {
+      "id": "be93121b8cd74b04ae4e68ec6aab64f9",
+      "status": "verified",
+      "reason": ""
+    }
+  ],
+  "limits": [
+    "One fresh source-learning success and one complete source-bound GUI/artifact success; no general reliability estimate.",
+    "Native execution is bounded to Blender on macOS; artifact inspection is blender_bevel_v1.",
+    "Pause/resume boundaries have deterministic regression coverage; the final successful live run did not need resume.",
+    "Original video, raw receipts, screenshots, transcript, artifact and credentials are local and excluded from Git."
+  ]
+}

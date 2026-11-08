@@ -1,5 +1,7 @@
 # Teammate review guide — WIP snapshot
 
+> Historical checkpoint for the original feature branch at `4aa58ed`. The repair branch `codex/video-learning-fixes` implements write confinement and completes a real source-bound GUI/save/artifact run. See the [new validation record](../../docs/video-learning-validation.md) for current behavior, tests, earlier failures and remaining limits. The warnings and RED-test counts below describe the older checkpoint.
+
 Branch: `feat/appdna-video-learning-agent`. This is a review checkpoint, not a release. Source code, tests, design contracts, and the English workbench are included. Credentials, raw evidence, downloaded tutorial media, generated deliverables, caches, and local execution state are not included.
 
 ## What changed

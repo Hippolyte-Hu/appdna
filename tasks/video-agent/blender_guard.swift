@@ -14,11 +14,14 @@ let command=args.count>1 ? args[1] : "probe"
 let pid=pid_t(args.count>2 ? Int32(args[2]) ?? 0 : 0)
 let session=CGSessionCopyCurrentDictionary() as? [String:Any] ?? [:]
 let locked=(session["CGSSessionScreenIsLocked"] as? Bool ?? false) || (session[kCGSessionOnConsoleKey as String] as? Bool != true)
+if command == "permissions" {
+    output(["accessibility":AXIsProcessTrusted(),"screen_recording":CGPreflightScreenCaptureAccess()]);exit(0)
+}
 if command == "lock" { output(["locked":locked]);exit(0) }
 if locked { fail("Mac is locked. Unlock it before running Blender actions.") }
 guard let app=NSRunningApplication(processIdentifier:pid),app.bundleIdentifier=="org.blenderfoundation.blender" else { fail("Target PID is not Blender") }
 if command == "activate" {
-    app.activate(options:[]);Thread.sleep(forTimeInterval:0.7)
+    app.activate(options:[.activateAllWindows,.activateIgnoringOtherApps]);Thread.sleep(forTimeInterval:0.7)
 }
 guard NSWorkspace.shared.frontmostApplication?.processIdentifier==pid else { fail("Blender target is not foreground; no input sent") }
 guard AXIsProcessTrusted() else { fail("Accessibility permission is missing") }

@@ -35,7 +35,10 @@ def inspect_replica(target: Path, *, expectations=None, source_folder=None) -> d
         validate_binding(expectations,Path(source_folder))
     original_hash=hashlib.sha256(target.read_bytes()).hexdigest()
     audit_path=target.with_suffix('.audit.json')
-    process=subprocess.run([str(BLENDER),'--background','--offline-mode','--disable-autoexec',str(target),'--python',str(INSPECT),'--',str(audit_path)],capture_output=True,text=True,timeout=90)
+    if audit_path.exists():
+        previous=hashlib.sha256(audit_path.read_bytes()).hexdigest()
+        audit_path.replace(target.with_name(target.stem+'.audit-'+previous+'.json'))
+    process=subprocess.run([str(BLENDER),'--background','--offline-mode','--disable-autoexec','--python-exit-code','1',str(target),'--python',str(INSPECT),'--',str(audit_path)],capture_output=True,text=True,timeout=90)
     if process.returncode or not audit_path.exists():return {'verification':'failed','reason':'Read-only artifact inspection failed'}
     audit=json.loads(audit_path.read_text())
     if expectations is not None:
@@ -49,14 +52,30 @@ def inspect_replica(target: Path, *, expectations=None, source_folder=None) -> d
     return result
 
 
-async def save_and_verify(folder: Path, driver, vision, stopped, *, expectations=None, source_folder=None) -> dict:
-    target=(folder/'replica.blend').resolve()
-    if target.exists():raise ValueError('Refusing to overwrite an existing artifact')
+async def save_and_verify(folder: Path, driver, vision, stopped, *, expectations=None, source_folder=None, resume=False) -> dict:
     if stopped():return {'verification':'failed','reason':'Stopped before saving artifact'}
+    if (folder/'replica.blend').is_symlink():raise ValueError('Artifact target must not be a symlink')
+    target=(folder/'replica.blend').resolve()
+    if resume:await asyncio.to_thread(driver.prepare_save,target,allow_existing=True)
+    if resume and target.is_file() and not target.is_symlink():
+        capture=folder/f'replica-resume-save-{len(list(folder.glob("replica-resume-save-*.png"))):03d}.png'
+        await asyncio.to_thread(driver.capture,capture)
+        return await asyncio.to_thread(inspect_replica,target,expectations=expectations,source_folder=source_folder)
+    if target.exists():raise ValueError('Refusing to overwrite an existing artifact')
+    await asyncio.to_thread(driver.prepare_save,target)
     await asyncio.to_thread(driver.capture,folder/'replica-before-save.png')
     step={'id':'save-artifact','instruction':'Save this current scene as the exact save_target using the GUI. This is artifact capture, not a demonstrated tutorial step.',
           'expected':'Blender titlebar shows replica.blend without an unsaved asterisk AFTER Save As, and the file dialog has closed.',
           'save_target':str(target),'uncertainty':''}
-    receipt=await execute_plan({'steps':[step]},folder/'save',driver,vision,stopped,max_actions=20,save_target=target)
+    receipt=await execute_plan({'steps':[step]},folder/'save',driver,vision,stopped,max_actions=20,save_target=target,resume=resume)
+    if receipt['status']!='observed_complete' and target.is_file() and not target.is_symlink() and not stopped():
+        # A saved file is measured directly. Keep the model's incomplete save
+        # receipt; never turn it into a fabricated UI completion event.
+        result=await asyncio.to_thread(inspect_replica,target,expectations=expectations,source_folder=source_folder)
+        result['save_receipt']=receipt
+        return result
+    if receipt['status']=='paused':return {'verification':'paused','reason':receipt.get('reason','Saving paused'),'save_receipt':receipt}
     if receipt['status']!='observed_complete':return {'verification':'failed','reason':receipt.get('reason',receipt['status']),'save_receipt':receipt}
+    if not target.is_file() or target.is_symlink():
+        return {'verification':'failed','reason':'Save was not observed at the exact sandbox destination','save_receipt':receipt}
     return await asyncio.to_thread(inspect_replica,target,expectations=expectations,source_folder=source_folder)

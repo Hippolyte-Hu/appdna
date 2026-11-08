@@ -84,6 +84,9 @@ def export_package(store: Store, project: Project, workdir: Path, destination: P
     media_folder = workdir.parent / "media"
     if media_folder.is_dir():
         shutil.copytree(media_folder, package / "evidence" / "recording", dirs_exist_ok=True)
+    video_source=workdir.parent/'video-source'
+    if video_source.is_dir():
+        shutil.copytree(video_source,package/'evidence'/'video-source',dirs_exist_ok=True)
     relevance = combined_source_relevance(workdir.parent)
     relevance_rows = {item.get("id"): item.get("relevant") for item in (relevance or {}).get("sources", [])}
     report_data = {column.name: getattr(project, column.name) for column in project.__table__.columns}

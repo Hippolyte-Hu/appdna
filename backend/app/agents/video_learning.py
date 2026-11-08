@@ -6,6 +6,7 @@ from pathlib import Path
 from PIL import Image
 from app.engines.media import _run
 from app.engines.tutorial import validate_plan
+from app.engines.captions import validate_transcript
 from app.providers.base import ProviderError
 
 
@@ -153,6 +154,7 @@ class VideoLearningAgent:
                         supported=all(c['supported'] and not c['issues'] for c in checks)
                         result={'accepted':supported,'source_checks':checks}
                         if supported:
+                            if should_stop():return terminate('stopped','Learning stopped by caller')
                             plan['source_sha256']=media['source_sha256']
                             knowledge.update({k:plan[k] for k in ('title','objective','prerequisites','steps','limitations')})
                             knowledge['source_checks']=checks
@@ -190,11 +192,13 @@ class VideoLearningAgent:
 
 async def learn_video_source(media, folder, asr, vision, *, source, objective, source_url=None, should_stop=lambda:False):
     if not media.get('has_video') or not media.get('has_audio'):raise ValueError('Tutorial needs video and spoken audio')
+    if should_stop():return {'status':'stopped','reason':'Learning stopped by caller'}
     transcript_path=folder/'transcript.json'
     if transcript_path.exists():transcript=json.loads(transcript_path.read_text())
     else:
         transcript=await asr.transcribe_file(Path(media['audio_path']))
         write_json(transcript_path,transcript)
-    if not transcript:raise ValueError('No usable spoken instructions')
+    transcript=validate_transcript(transcript,media['duration'])
+    if should_stop():return {'status':'stopped','reason':'Learning stopped by caller'}
     return await VideoLearningAgent(vision).run(media,folder,transcript,source=source,objective=objective,
         source_url=source_url,should_stop=should_stop)

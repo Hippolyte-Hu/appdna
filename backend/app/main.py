@@ -1,4 +1,5 @@
 import re
+from contextlib import asynccontextmanager
 from threading import Lock
 from pathlib import Path
 
@@ -17,23 +18,30 @@ from app.orchestrator import run_session, resume_session
 from app.schemas import ProjectCreate
 from app.store import Store
 from app.util import loads, new_id, utcnow
+from app.tutorial_app import app as video_app,lifespan as video_lifespan,workbench_html
 
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".mp4", ".webm", ".ogg", ".flac"}
 MAX_AUDIO_BYTES = 25 * 1024 * 1024
 _session_start_lock = Lock()
 
-app = FastAPI(title="AppDNA", version="1.0.0")
+@asynccontextmanager
+async def lifespan(_app):
+    init_db()
+    async with video_lifespan(video_app):yield
+
+
+app = FastAPI(title="AppDNA", version="1.0.0",lifespan=lifespan)
+
+@app.get('/video',include_in_schema=False)
+def video_home():return workbench_html('/video')
+
+app.mount('/video',video_app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-def _startup() -> None:
-    init_db()
 
 
 @app.get("/api/health")

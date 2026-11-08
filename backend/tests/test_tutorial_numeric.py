@@ -10,11 +10,12 @@ def test_numeric_edit_validates_point_and_bounded_number():
     with pytest.raises(ValueError):validate_action({'action':'set_number','x':1001,'y':458,'text':'4'})
 
 
-def test_numeric_edit_replaces_and_commits_with_real_keys(monkeypatch):
+def test_numeric_edit_replaces_and_commits_with_real_keys(monkeypatch,tmp_path):
     from app.drivers import blender_tutorial
     calls=[]
     monkeypatch.setattr(blender_tutorial,'guard',lambda *args:calls.append(args) or {})
     monkeypatch.setattr(blender_tutorial.time,'sleep',lambda _:None)
-    driver=BlenderTutorialDriver(type('Process',(),{'pid':123})())
+    driver=BlenderTutorialDriver(type('Process',(),{'pid':123,'poll':lambda self:None})(),tmp_path)
+    monkeypatch.setitem(blender_tutorial._OWNED,123,driver)
     driver.perform({'action':'set_number','x':940,'y':458,'text':'4'})
     assert calls==[('double_click',123,'940','458'),('key',123,'ctrl+a'),('type',123,'4'),('key',123,'return')]

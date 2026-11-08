@@ -37,11 +37,11 @@ def test_model_done_does_not_mean_independently_verified(tmp_path):
     assert result['verification']=='not_independently_verified'
 
 
-def test_blocked_driver_becomes_explicit_blocked_result(tmp_path):
+def test_locked_driver_becomes_explicit_pause_without_input(tmp_path):
     class Driver:
         def capture(self,path):raise RuntimeError('Mac is locked')
     result=asyncio.run(execute_plan({'steps':[{'id':'s1'}]},tmp_path,Driver(),None,lambda:False))
-    assert result['status']=='blocked'
+    assert result['status']=='paused'
     assert 'locked' in result['reason']
 
 
@@ -56,3 +56,4 @@ def test_repeated_same_action_is_blocked_before_third_input(tmp_path):
     assert result['status']=='blocked'
     assert 'Repeated' in result['reason']
     assert len(inputs)==2
+    assert all(event['capture_changed'] is False for event in result['events'])

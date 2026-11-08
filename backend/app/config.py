@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     hcompany_api_key: str = ""
     hcompany_base_url: str = "https://api.hcompany.ai/v1"
     hcompany_model: str = "holo4-27b"
+    appdna_learning_model: str = ""
+    appdna_action_model: str = ""
     linkup_api_key: str = ""
     linkup_base_url: str = "https://api.linkup.so"
     gladia_api_key: str = ""

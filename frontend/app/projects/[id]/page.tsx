@@ -155,7 +155,7 @@ export default function ProjectPage() {
         <div className="flex flex-col justify-between rounded-2xl border border-line bg-white/5 p-6">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-signal">
-              {project.status === "failed" ? "Latest attempt stopped · evidence retained" : coverageIncomplete ? "Partial learning result" : acquired ? "Independent test passed" : matchedDocs ? "Live app matches the documents" : fromText ? "Written sources were enough" : observed.length ? "Observed from the screen" : "Learning run"}
+              {project.status === "failed" ? "Latest attempt stopped · evidence retained" : coverageIncomplete ? "Partial learning result" : acquired ? "Independent test passed" : matchedDocs ? "Live app matches the documents" : fromText ? recorded.length ? "Video source checked" : "Written sources were enough" : observed.length ? "Observed from the screen" : "Learning run"}
             </p>
             <h1 className="mt-3 font-sans text-4xl font-medium leading-tight tracking-tight">{headline}</h1>
             {project.error_message ? <p role="alert" className="mt-3 text-sm leading-6 text-clay">{project.error_message}</p> : null}
@@ -302,6 +302,7 @@ function phaseLabel(status: string): string {
 }
 
 function stageLabel(project: ProjectDetail): string {
+  if (project.status === "completed") return "Evidence retained";
   if (project.status === "failed") return "Stopped";
   if (project.status === "researching" || project.status === "understanding") return "Reading the documents";
   if (project.status === "exploring") return "Opening the software";

@@ -22,7 +22,7 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "AppDNA",
-  description: "Evidence-led software assessments for procurement and internal pre-UAT reviews.",
+  description: "Learn software workflows from video and verify computer-use outcomes with source evidence.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@xyflow/react": "^12.12.1",

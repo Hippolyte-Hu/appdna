@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 from app.adapters.script_guard import validate_script
+from app.blender_runtime import resolve_blender
 from app.util import strip_code_fence
 
 INSPECT_SCRIPT = """
@@ -124,7 +125,7 @@ class BlenderUnavailable(Exception):
 
 class BlenderAdapter:
     def __init__(self, binary: str) -> None:
-        self.binary = binary
+        self.binary = resolve_blender(binary)
 
     def available(self) -> bool:
         return bool(shutil.which(self.binary) or Path(self.binary).exists())

@@ -11,7 +11,10 @@ export function WorkspaceHeader({ context = "Review workspace" }: { context?: st
       </Link>
       <span className="workspace-divider" aria-hidden="true" />
       <p className="min-w-0 truncate text-sm text-ink/65">{context}</p>
-      <p className="ml-auto hidden text-xs tracking-wide text-ink/60 sm:block">Evidence before commitment.</p>
+      <nav className="ml-auto flex gap-4 text-xs text-ink/70" aria-label="Workspace">
+        <a href="/video/">Video learning</a>
+        <Link href="/assessments">Projects & skills</Link>
+      </nav>
     </header>
   );
 }
