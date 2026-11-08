@@ -427,6 +427,8 @@ class HCompanyProvider:
         if step.get("save_target"):
             prompt += ("\nThis is a separately authorized SAVE-ONLY stage. Save the current scene via File > Save As (ctrl+shift+s) to the EXACT save_target in the step. "
                        "Use set_text with a freshly grounded x,y and the exact directory with trailing slash or filename. This atomically focuses, selects all, pastes/replaces, and presses Return. Do not use type for these save fields. "
+                       "The step.save_policy.required_next field is mandatory: directory means set_text the exact TOP directory first; filename means set_text only the BOTTOM filename; confirm_save means click Save As; done means the requested artifact exists. "
+                       "If the save dialog is already open, do not reopen it. Failed/rejected actions or provider errors did not send input; inspect the new screenshot. "
                        "Click the path field at the TOP of Blender file browser, enter the directory, Return; set filename at the BOTTOM; click Save As. "
                        "Never browse/open other files or overwrite an unrelated file. You MUST first open Save As and save: the initial unsaved scene is NOT done. done only after the file dialog closes and titlebar shows replica.blend, not Untitled.")
         return await self._look(prompt, [image_bytes], schema, "tutorial_action", max_tokens=850)

@@ -15,6 +15,8 @@ def test_numeric_edit_replaces_and_commits_with_real_keys(monkeypatch):
     calls=[]
     monkeypatch.setattr(blender_tutorial,'guard',lambda *args:calls.append(args) or {})
     monkeypatch.setattr(blender_tutorial.time,'sleep',lambda _:None)
+    # Unit-only keyboard sequence; OS isolation has separate real integration tests.
+    monkeypatch.setattr(BlenderTutorialDriver,'_check_sandbox',lambda self:None)
     driver=BlenderTutorialDriver(type('Process',(),{'pid':123})())
     driver.perform({'action':'set_number','x':940,'y':458,'text':'4'})
     assert calls==[('double_click',123,'940','458'),('key',123,'ctrl+a'),('type',123,'4'),('key',123,'return')]

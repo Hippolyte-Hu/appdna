@@ -85,6 +85,14 @@ export default function HomePage() {
         </section>
         <div className="min-w-0 space-y-6">
           <section className="workspace-panel">
+            <div className="p-5 sm:p-6">
+              <p className="eyebrow">Learn once. Reuse.</p>
+              <h2 className="mt-2 text-xl font-medium">Learning Showcase</h2>
+              <p className="mt-3 text-sm leading-7 text-ink/70">See what the Agent learned from a video, inspect the saved evidence, then let it operate Blender using that workflow.</p>
+              <Link href="/learning" className="workspace-primary mt-5">Open Learning Showcase <span aria-hidden="true">→</span></Link>
+            </div>
+          </section>
+          <section className="workspace-panel">
             <div className="panel-heading"><div><p className="eyebrow">How the review works</p><h2 className="mt-2 text-lg font-medium">Evidence, not a sales pitch.</h2></div></div>
             <ol className="review-method">
               <li><span>01</span><div><h3>Read the right product</h3><p>Collect relevant sources. Keep unrelated applications out of the knowledge map.</p></div></li>

@@ -17,3 +17,10 @@ Continue the accepted Holo4 learning receipt into a new PID-scoped scratch scene
 3. New scratch GUI execution under lock/PID/window/foreground guards; no existing scene reused.
 4. Real saved artifact and independent read-only inspection, or an explicit blocked/failed receipt without a fabricated success.
 5. API/UI display states and downloads match real receipts; test suite/compile/diff checks pass; disposable preview is stopped.
+
+## Safe execution reuse
+- The hard write boundary is a macOS Seatbelt profile: default read/runtime behavior, but deny all filesystem writes except the new, canonical `run` directory. No unsandboxed fallback. Python environment/config/cache/temp paths are private to this run; provider credentials are not inherited.
+- Attach only with a matching PID/start identity, canonical scope, generated profile hash and live kernel write-permission checks. Existing directories must be queried: `sandbox_check` falsely reports denial for nonexistent paths even for an unsandboxed PID.
+- Saving is directory-first, then filename, then confirmation; a real target file is required for completion. This sequence is a usability guard, not the filesystem security boundary.
+- `POST /api/video-sources/{source_id}/executions` reuses source-checked knowledge without running download, ASR, learning or GUI actions. It creates a new job UUID, copies the checked source, plan, cited frames and valid pre-bound targets, but never copies run receipts, artifacts or approvals. Execution still requires explicit review and scratch approval.
+- Execution jobs record `source_job_id`, do not appear as new learned sources, and show reuse in the English workbench. Preserve old jobs; unsupported/tampered/missing source evidence fails before creating a new execution.

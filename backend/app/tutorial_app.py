@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from app.config import get_settings
 from app.engines.media import prepare_media
 from app.agents.video_learning import learn_video_source
-from app.engines.tutorial_expectations import build_expectations
+from app.engines.tutorial_expectations import build_expectations,source_state,local_media,validate_binding
 from app.engines.tutorial_runner import execute_plan,youtube_url
 from app.drivers.blender_tutorial import BlenderTutorialDriver,guard
 from app.providers.gladia import GladiaProvider
@@ -130,6 +130,8 @@ def video_sources(q:str=Query('',max_length=200),limit:int=Query(20,ge=1,le=100)
     """Parent-agent retrieval: only source-checked knowledge, never execution proof."""
     matches=[]
     for path in sorted(DATA.glob('*/knowledge.json'),key=lambda p:p.stat().st_mtime,reverse=True):
+        job_file=path.parent/'job.json'
+        if job_file.exists() and json.loads(job_file.read_text()).get('kind')=='video_source_execution':continue
         knowledge=json.loads(path.read_text())
         if knowledge.get('status')!='source_checked':continue
         text=' '.join(str(knowledge.get(k,'')) for k in ('title','objective','steps'))
@@ -147,6 +149,47 @@ def video_source(job_id:str):
     return FileResponse(path,media_type='application/json',filename='video-knowledge-'+job_id+'.json')
 
 
+@app.post('/api/video-sources/{job_id}/executions')
+def reuse_source(job_id:str):
+    """Reuse accepted knowledge, never its run, artifact, approval or PID."""
+    original=folder(job_id);source_job=read(job_id)
+    if source_job.get('kind')=='video_source_execution':raise HTTPException(409,'Select the original video source to create a new run')
+    try:
+        knowledge,_=source_state(original)
+        if not knowledge.get('evidence'):raise ValueError('Checked video evidence is missing')
+        names={'knowledge.json','plan.json',knowledge['source_file']}
+        for evidence in knowledge['evidence']:
+            local_media(original,evidence['image'],{'.jpg','.png'});names.add(evidence['image'])
+        manifest=json.loads((original/'manifest.json').read_text()) if (original/'manifest.json').exists() else {'frames':[]}
+        available=[]
+        for frame in manifest.get('frames',[]):
+            if not (original/frame['image']).exists():continue
+            local_media(original,frame['image'],{'.jpg','.png'});names.add(frame['image']);available.append(frame)
+        manifest['frames']=available;manifest.pop('audio_path',None)
+        for name in ['transcript.json','agent.json','artifact-expectations.json']:
+            if (original/name).exists():names.add(name)
+        for name in names:
+            if Path(name).is_absolute() or '..' in Path(name).parts:raise ValueError('Source paths must remain relative to their own receipt')
+            local_media(original,name,{'.json','.jpg','.png','.mp4','.mov','.webm','.mkv'})
+        if 'artifact-expectations.json' in names:
+            validate_binding(json.loads((original/'artifact-expectations.json').read_text()),original)
+    except (ValueError,KeyError,TypeError,OSError) as exc:
+        raise HTTPException(409,'Cannot reuse source: '+str(exc)[:250])
+    new_id=uuid.uuid4().hex;path=DATA/new_id;path.mkdir()
+    job={'id':new_id,'kind':'video_source_execution','source_job_id':job_id,'title':knowledge.get('title','Blender tutorial'),
+        'objective':knowledge['objective'],'status':'ready_for_review','source_file':knowledge['source_file'],
+        'youtube_url':knowledge.get('source_url'),'reuse_note':'Reused checked knowledge and media; no new download, transcription or learning.'}
+    try:
+        for name in sorted(names):
+            target=path/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(original/name,target)
+        (path/'manifest.json').write_text(json.dumps(manifest,indent=2))
+        source_state(path)
+    except (ValueError,OSError) as exc:
+        job.update(status='blocked',error='Source copy failed');save(path,job)
+        raise HTTPException(500,'Could not create an intact source copy') from exc
+    save(path,job);return job
+
+
 class Approval(BaseModel):
     confirm_scratch:bool=False
     reviewed:bool=False
@@ -161,7 +204,9 @@ async def run(job_id:str,approval:Approval):
     if active:raise HTTPException(409,'Another Blender execution is active')
     if not (path/'plan.json').exists():raise HTTPException(409,'Learn the tutorial first')
     if await asyncio.to_thread(lambda:guard('lock')['locked']):raise HTTPException(409,'Mac is locked. Unlock the Mac before running Blender actions.')
-    if (path/'run').exists():raise HTTPException(409,'This tutorial already has a run receipt; import again for a fresh run')
+    if (path/'run').exists():raise HTTPException(409,'This tutorial already has a run receipt; create a new run from the checked source')
+    # The desktop check yielded to other requests; claim only after rechecking.
+    if active:raise HTTPException(409,'Another Blender execution is active')
     active=job_id;stops[job_id]=False
     job['status']='starting_blender';save(path,job)
     spawn(execute(job_id));return {'status':'starting_blender'}
